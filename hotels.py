@@ -1,7 +1,7 @@
 from fastapi import Body, Query, APIRouter
 from pydantic import BaseModel, Field
-
 from schemas.hotels import Hotel, HotelPATCH
+from dependencies import PaginationDep
 
 router = APIRouter(prefix='/hotels')
 
@@ -19,13 +19,14 @@ hotels = [
 
 @router.get("", summary='Получить все отели')
 def get_hotels(
-    hotel_id: int | None = Query(None, description='id отеля'), 
+    pagination: PaginationDep,
+    hotel_id: int | None = Query(None, description='id отеля'),
     title: str | None = Query(None, description='Название отеля'),
-    page: int = Query(1, gt=0, description='Текущая страница'),
-    per_page: int = Query(3, description='Количество на странице')
-    ):
-    result = [hotel for hotel in hotels if hotel_id and hotel_id == hotel['id'] or title and title in hotel['title']] or hotels
-    return result[(page-1)*per_page:page*per_page]
+    
+):
+    result = [hotel for hotel in hotels if hotel_id and hotel_id ==
+              hotel['id'] or title and title in hotel['title']] or hotels
+    return result[(pagination.page - 1) * pagination.per_page:pagination.page * pagination.per_page]
 
 
 @router.post("", summary='Добавить отель')
