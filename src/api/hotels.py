@@ -1,7 +1,7 @@
 from fastapi import Body, Query, APIRouter
 from pydantic import BaseModel, Field
-from schemas.hotels import Hotel, HotelPATCH
-from dependencies import PaginationDep
+from src.schemas.hotels import Hotel, HotelPATCH
+from src.api.dependencies import PaginationDep
 
 router = APIRouter(prefix='/hotels')
 
