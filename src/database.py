@@ -1,17 +1,14 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
+from sqlalchemy.orm import DeclarativeBase
 from src.config import settings
 
 
 engine = create_async_engine(settings.DB_URL)
 
+async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 
-# import asyncio
-# RAW SQL
-# async def raw_func():
-#     async with engine.begin() as conn:
-#         res = await conn.execute(text('SELECT version()'))
-#         print(res.fetchone())
+session = async_session_maker()
 
-# asyncio.run(raw_func())
+class Base(DeclarativeBase):
+    pass
