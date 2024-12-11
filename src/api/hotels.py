@@ -25,7 +25,7 @@ async def get_hotels(
 
 
 @router.post("", summary='Добавить отель')
-async def create_hotel(hotel: Hotel = Body(openapi_examples={
+async def create_hotel(hotel_data: Hotel = Body(openapi_examples={
     '1': {'summary': 'Сочи', 'value': {
         'title': 'Русь 5 звезд',
         'location': 'Сочи, ул. Морская, 3'
@@ -36,9 +36,9 @@ async def create_hotel(hotel: Hotel = Body(openapi_examples={
     }}
 })):
     async with async_session_maker() as session:
-        new_hotel = await HotelsRepository(session).add(hotel)
+        new_hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
-    return {'message': 'OK', 'hotel': new_hotel}
+    return {'status': 'OK', 'data': new_hotel}
 
 
 @router.put("/{hotel_id}", summary='Обновить информацию об отеле')
