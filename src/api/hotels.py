@@ -1,9 +1,10 @@
 from fastapi import Body, Query, APIRouter
-from sqlalchemy import insert, select
-from models.hotels import HotelsOrm
+from sqlalchemy import insert
+from src.models.hotels import HotelsOrm
+from src.repositories.hotels import HotelsRepository
 from src.schemas.hotels import Hotel, HotelPATCH
 from src.api.dependencies import PaginationDep
-from src.database import async_session_maker, engine
+from src.database import async_session_maker
 
 router = APIRouter(prefix='/hotels')
 
@@ -15,22 +16,12 @@ async def get_hotels(
     location: str | None = Query(None, description='Расположение отеля')
 ):
     async with async_session_maker() as session:
-        query = select(HotelsOrm)
-        if title:
-            query = query.filter(HotelsOrm.title.icontains(title))
-        if location:
-            query = query.filter(HotelsOrm.location.icontains(location))
-        query = (
-            query
-            .limit(pagination.page * pagination.per_page)
-            .offset((pagination.page - 1) * pagination.per_page)
+        return await HotelsRepository(session).get_all(
+            title=title,
+            location=location,
+            limit=pagination.per_page,
+            offset=pagination.per_page * (pagination.page - 1)
         )
-        # ! Не работает case-insensitive
-        # print(query.compile(engine, compile_kwargs={'literal_binds': True}))
-        hotels = await session.execute(query)
-        hotels = hotels.scalars().all()
-
-    return hotels
 
 
 @router.post("", summary='Добавить отель')
@@ -45,10 +36,9 @@ async def create_hotel(hotel: Hotel = Body(openapi_examples={
     }}
 })):
     async with async_session_maker() as session:
-        add_hotel_stmt = insert(HotelsOrm).values(hotel.model_dump())
-        await session.execute(add_hotel_stmt)
+        new_hotel = await HotelsRepository(session).add(hotel)
         await session.commit()
-    return {'message': 'OK'}
+    return {'message': 'OK', 'hotel': new_hotel}
 
 
 @router.put("/{hotel_id}", summary='Обновить информацию об отеле')
