@@ -27,8 +27,8 @@ class HotelsRepository(BaseRepository):
         return result.scalars().all()
 
 
-    async def add(self, hotel: Hotel) -> Hotel:
-        new_hotel = HotelsOrm(**hotel.model_dump())
-        self.session.add(new_hotel)
-        await self.session.flush()
-        return new_hotel
+    # async def add(self, hotel: Hotel) -> Hotel:
+    #     new_hotel = HotelsOrm(**hotel.model_dump())
+    #     self.session.add(new_hotel)
+    #     await self.session.flush()
+    #     return new_hotel
