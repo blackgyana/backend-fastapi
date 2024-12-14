@@ -6,6 +6,7 @@ from src.models.hotels import HotelsOrm
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
+    schema = Hotel
 
     async def get_all(self,
                       title: str,
@@ -24,11 +25,4 @@ class HotelsRepository(BaseRepository):
             )
         query = query.limit(limit).offset(offset)
         result = await self.session.execute(query)
-        return result.scalars().all()
-
-
-    # async def add(self, hotel: Hotel) -> Hotel:
-    #     new_hotel = HotelsOrm(**hotel.model_dump())
-    #     self.session.add(new_hotel)
-    #     await self.session.flush()
-    #     return new_hotel
+        return [Hotel.model_validate(model) for model in result.scalars().all()]

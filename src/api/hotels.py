@@ -1,6 +1,6 @@
 from fastapi import Body, Query, APIRouter
 from src.repositories.hotels import HotelsRepository
-from src.schemas.hotels import Hotel, HotelPATCH
+from src.schemas.hotels import Hotel, HotelAdd, HotelPATCH
 from src.api.dependencies import PaginationDep
 from src.database import async_session_maker
 
@@ -28,7 +28,7 @@ async def get_hotel(hotel_id: int):
 
 
 @router.post("", summary='Добавить отель')
-async def create_hotel(hotel_data: Hotel = Body(openapi_examples={
+async def create_hotel(hotel_data: HotelAdd = Body(openapi_examples={
     '1': {'summary': 'Сочи', 'value': {
         'title': 'Русь 5 звезд',
         'location': 'Сочи, ул. Морская, 3'
