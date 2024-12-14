@@ -25,7 +25,10 @@ class BaseRepository:
     async def get_one_or_none(self, **filter_by):
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
-        return result.scalars().one_or_none()
+        obj = result.scalars().one_or_none()
+        if not obj:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return obj
 
     async def add(self, data: BaseModel):
         add_stmt = (
@@ -36,11 +39,11 @@ class BaseRepository:
         result = await self.session.execute(add_stmt)
         return result.scalars().one()
 
-    async def edit(self, data: BaseModel, **filter_by) -> None:
+    async def edit(self, data: BaseModel, exclude_unset = False, **filter_by) -> None:
         edit_stmt = (
             update(self.model)
-            .values(**data.model_dump())
             .filter_by(**filter_by)
+            .values(**data.model_dump(exclude_unset=exclude_unset))
             .returning(self.model.id)
         )
         result = await self.session.execute(edit_stmt)

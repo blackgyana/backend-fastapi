@@ -1,6 +1,4 @@
 from fastapi import Body, Query, APIRouter
-from sqlalchemy import insert
-from src.models.hotels import HotelsOrm
 from src.repositories.hotels import HotelsRepository
 from src.schemas.hotels import Hotel, HotelPATCH
 from src.api.dependencies import PaginationDep
@@ -14,7 +12,7 @@ async def get_hotels(
     pagination: PaginationDep,
     title: str | None = Query(None, description='Название отеля'),
     location: str | None = Query(None, description='Расположение отеля')
-):
+) -> list[Hotel]:
     async with async_session_maker() as session:
         return await HotelsRepository(session).get_all(
             title=title,
@@ -22,6 +20,11 @@ async def get_hotels(
             limit=pagination.per_page,
             offset=pagination.per_page * (pagination.page - 1)
         )
+    
+@router.get('/{hotel_id}', summary='Получить 1 отель')
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get_one_or_none(id=hotel_id)
 
 
 @router.post("", summary='Добавить отель')
@@ -50,13 +53,11 @@ async def update_hotel(hotel_id: int, hotel_data: Hotel):
 
 
 @router.patch("/{hotel_id}", summary='Частично обновить информацию об отеле', description='Можно менять каждое поле в отдельности или все поля разом')
-def update_hotel_part(hotel_id: int, hotel: HotelPATCH):
-    hotel = next((h for h in hotels if h['id'] == hotel_id), None)
-    if not hotel:
-        return {'message': 'Not found'}
-    hotel['title'] = hotel.title if hotel.title is not None else hotel['title']
-    hotel['name'] = hotel.name if hotel.name is not None else hotel['name']
-    return {'message': 'OK'}
+async def update_hotel_part(hotel_id: int, hotel_data: HotelPATCH):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=hotel_id)
+        await session.commit()
+    return {'status': 'OK'}
 
 
 @router.delete("/{hotel_id}", summary='Удалить отель')
