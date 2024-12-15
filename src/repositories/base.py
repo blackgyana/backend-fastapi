@@ -32,9 +32,7 @@ class BaseRepository:
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         res = result.scalars().one_or_none()
-        if not res:
-            raise HTTPException(status_code=404, detail="Item not found")
-        return self.schema.model_validate(res)
+        return self.schema.model_validate(res) if res else None
 
     async def add(self, data: BaseModel):
         '''Добавить сущность'''

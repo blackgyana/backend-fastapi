@@ -10,6 +10,9 @@ class BaseUser(BaseModel):
 class UserRequestAdd(BaseUser):
     password: str
 
+class UserRequestLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 class UserAdd(BaseUser):
     hashed_password: str
