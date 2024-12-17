@@ -1,6 +1,8 @@
 from typing import Annotated
-from fastapi import Depends, Query
+from fastapi import Depends, HTTPException, Query, Request
 from pydantic import BaseModel
+import jwt
+from src.services.auth import AuthService
 
 class PaginationParams(BaseModel):
     page: Annotated[int | None, Query(1, gt=0, description='Текущая страница')]
@@ -8,3 +10,20 @@ class PaginationParams(BaseModel):
 
 
 PaginationDep = Annotated[PaginationParams, Depends()]
+
+def get_token(request:Request):
+    access_token = request.cookies.get('access_token')
+    if not access_token:
+        raise HTTPException(401, 'Unauthorized')
+    return access_token
+
+def get_current_user_id(token:str = Depends(get_token)):
+    try:
+        data = AuthService().decode_token(token)
+    except jwt.exceptions.DecodeError:
+        raise HTTPException(401, 'Invalid token')   
+    except jwt.exceptions.ExpiredSignatureError:
+        raise HTTPException(401, 'Token expired')
+    return data['uid']
+
+UserIdDep = Annotated[int, Depends(get_current_user_id)]
