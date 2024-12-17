@@ -48,7 +48,7 @@ async def get_me(uid: UserIdDep) -> BaseUser:
     return user
 
 
-@router.get('/logout')
-async def logout_user(user: Annotated[User, Depends(get_me)], response: Response):
+@router.post('/logout') # POST - изменение состояния на сервере
+async def logout_user(uid: UserIdDep, response: Response):
     response.delete_cookie('access_token')
     return {'status': 'OK'}
