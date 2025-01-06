@@ -21,11 +21,14 @@ class BaseRepository:
         elif count > 1:
             raise HTTPException(status_code=400, detail="Bad request")
 
-    async def get_all(self, *args, **kwargs):
-        '''Получить все сущности'''
-        query = select(self.model)
+    async def get_filtered(self, **filter_by):
+        query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         return result.scalars().all()
+    
+    async def get_all(self, *args, **kwargs):
+        '''Получить все сущности'''
+        return await self.get_filtered()
 
     async def get_one_or_none(self, **filter_by):
         '''Получить 1 сущность или ничего'''
@@ -44,7 +47,7 @@ class BaseRepository:
         try:
             result = await self.session.execute(add_stmt)
         except IntegrityError:
-            raise HTTPException(status_code=400, detail="Bad request. Item already exists.")
+            raise HTTPException(status_code=400, detail="Bad request. Item not found or already exists.")
         return self.schema.model_validate(result.scalars().one())
 
     async def edit(self, data: BaseModel, exclude_unset=False, **filter_by) -> None:
