@@ -11,7 +11,7 @@ class Hotel(HotelAdd):
     id: int
 
     # приводить к pydantic схеме из атрибутов ORM модели
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra='forbid')
 
 
 class HotelPATCH(BaseModel):

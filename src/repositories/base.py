@@ -55,7 +55,10 @@ class BaseRepository:
             .values(**data.model_dump(exclude_unset=exclude_unset))
             .returning(self.model.id)
         )
-        result = await self.session.execute(edit_stmt)
+        try:
+            result = await self.session.execute(edit_stmt)
+        except IntegrityError:
+            raise HTTPException(400, 'Неверные данные в теле запроса')
         self._validate_one(result)
 
     async def delete(self, **filter_by) -> None:
