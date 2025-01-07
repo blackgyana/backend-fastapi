@@ -5,14 +5,18 @@ from src.schemas.rooms import Room
 
 router = APIRouter(prefix='/bookings')
 
+@router.get('/', summary='Получить все бронирования')
+async def get_bookings(db: DBDep) -> list[Bookings]:
+    return await db.bookings.get_all()
 
-@router.get('', summary='Получить все бронирования')
-async def get_bookings(uid: UserIdDep, db: DBDep) -> list[Bookings]:
-    return await db.bookings.get_all(user_id=uid)
+
+@router.get('/me', summary='Получить все мои бронирования')
+async def get_my_bookings(uid: UserIdDep, db: DBDep) -> list[Bookings]:
+    return await db.bookings.get_filtered(user_id=uid)
 
 
 @router.post('', summary='Добавить бронирование')
-async def add_bookings(uid: UserIdDep, db: DBDep, booking_data: BookingsAddRequest):
+async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingsAddRequest):
     room: Room = await db.rooms.get(id=booking_data.room_id)
     _booking_data = BookingsAdd(
         **booking_data.model_dump(), user_id=uid, price=room.price)
@@ -22,7 +26,7 @@ async def add_bookings(uid: UserIdDep, db: DBDep, booking_data: BookingsAddReque
 
 
 @router.delete('/{booking_id}', summary='Удалить бронирование')
-async def get_bookings(uid: UserIdDep, db: DBDep, booking_id: int):
+async def delete_booking(uid: UserIdDep, db: DBDep, booking_id: int):
     await db.bookings.delete(id=booking_id, user_id=uid)
     await db.commit()
     return {'status': 'OK'}
