@@ -1,6 +1,5 @@
 
-from typing import Annotated
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 class RoomAddRequest(BaseModel):
     title: str

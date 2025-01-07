@@ -29,6 +29,15 @@ class BaseRepository:
     async def get_all(self, *args, **kwargs):
         '''Получить все сущности'''
         return await self.get_filtered()
+    
+    async def get(self, **filter_by):
+        '''Получить 1 сущность'''
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        res = result.scalars().one_or_none()
+        if not res:
+            raise HTTPException(404, 'Item not found')
+        return self.schema.model_validate(res)
 
     async def get_one_or_none(self, **filter_by):
         '''Получить 1 сущность или ничего'''
@@ -36,6 +45,7 @@ class BaseRepository:
         result = await self.session.execute(query)
         res = result.scalars().one_or_none()
         return self.schema.model_validate(res) if res else None
+        
 
     async def add(self, data: BaseModel):
         '''Добавить сущность'''
