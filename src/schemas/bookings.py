@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from datetime import date
+from datetime import date, datetime
 
 
 class BookingsAddRequest(BaseModel):
@@ -16,6 +16,7 @@ class BookingsAdd(BookingsAddRequest):
 class Bookings(BookingsAdd):
     id: int
     total_cost: int
+    created_at: datetime
 
     # приводить к pydantic схеме из атрибутов ORM модели и не принимать лишние поля
     model_config = ConfigDict(from_attributes=True, extra='forbid')
