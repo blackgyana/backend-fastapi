@@ -21,8 +21,12 @@ class BaseRepository:
         elif count > 1:
             raise HTTPException(status_code=400, detail="Bad request")
 
-    async def get_filtered(self, **filter_by):
-        query = select(self.model).filter_by(**filter_by)
+    async def get_filtered(self, *filter, **filter_by):
+        query = (
+            select(self.model)
+            .filter(*filter)
+            .filter_by(**filter_by)
+        )
         result = await self.session.execute(query)
         return result.scalars().all()
     
