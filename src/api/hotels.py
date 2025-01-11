@@ -17,13 +17,6 @@ async def get_hotels(
     location: str | None = Query(None, description='Расположение отеля')
 ) -> list[Hotel]:
 
-    # return await db.hotels.get_all(
-    #     title=title,
-    #     location=location,
-    #     limit=pagination.per_page,
-    #     offset=pagination.per_page * (pagination.page - 1)
-    # )
-
     limit = pagination.per_page
     offset = pagination.per_page * (pagination.page - 1)
 
