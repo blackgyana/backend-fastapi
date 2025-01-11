@@ -20,9 +20,9 @@ async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingsAddReques
     room: Room = await db.rooms.get(id=booking_data.room_id)
     _booking_data = BookingsAdd(
         **booking_data.model_dump(), user_id=uid, price=room.price)
-    new_booking: Bookings = await db.bookings.add(_booking_data)
+    booking: Bookings = await db.bookings.add(_booking_data)
     await db.commit()
-    return {'status': 'OK', 'booking': new_booking}
+    return {'status': 'OK', 'data': booking}
 
 
 @router.delete('/{booking_id}', summary='Удалить бронирование')

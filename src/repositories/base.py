@@ -64,6 +64,18 @@ class BaseRepository:
             raise HTTPException(status_code=400, detail="Bad request. Item not found or already exists.")
         return self.schema.model_validate(result.scalars().one())
 
+    async def add_bulk(self, data: list[BaseModel]):
+        '''Добавить сущность'''
+        add_stmt = (
+            insert(self.model)
+            .values([obj.model_dump() for obj in data])
+        )
+        try:
+            await self.session.execute(add_stmt)
+        except IntegrityError:
+            raise HTTPException(status_code=400, detail="Bad request. Item already exists.")
+
+
     async def edit(self, data: BaseModel, exclude_unset=False, **filter_by) -> None:
         '''Изменить сущность'''
         edit_stmt = (
@@ -78,10 +90,11 @@ class BaseRepository:
             raise HTTPException(400, 'Неверные данные в теле запроса')
         self._validate_one(result)
 
-    async def delete(self, **filter_by) -> None:
+    async def delete(self, *filter, **filter_by) -> None:
         '''Удалить сущность'''
         del_stmt = (
             delete(self.model)
+            .filter(*filter)
             .filter_by(**filter_by)
             .returning(self.model.id)
         )

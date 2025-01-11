@@ -13,6 +13,6 @@ async def get_facilities(db: DBDep) -> list[Facility]:
 
 @router.post('', summary='Добавить удобство')
 async def add_facility(db: DBDep, facility_data: FacilityAdd):
-    new_facility = await db.facilities.add(facility_data)
+    facility = await db.facilities.add(facility_data)
     await db.commit()
-    return {'status': 'OK', 'facility': new_facility}
+    return {'status': 'OK', 'data': facility}

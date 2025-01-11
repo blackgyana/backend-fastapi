@@ -1,7 +1,8 @@
 from datetime import date
 from fastapi import Body, Query, APIRouter
+from src.schemas.facilities import RoomsFacilitiesAdd
 from src.api.dependencies import DBDep
-from src.schemas.rooms import Room, RoomAdd, RoomAddRequest, RoomPatchRequest
+from src.schemas.rooms import Room, RoomAdd, RoomAddRequest, RoomPatch, RoomPatchRequest
 
 router = APIRouter(prefix='/hotels')
 
@@ -21,36 +22,46 @@ async def get_room(db: DBDep, hotel_id: int, room_id: int):
 
 
 @router.post("/{hotel_id}/rooms", summary='Добавить номер')
-async def create_room(db: DBDep, hotel_id: int, room_data: RoomAddRequest = Body(openapi_examples={
+async def add_room(db: DBDep, hotel_id: int, room_data: RoomAddRequest = Body(openapi_examples={
     '1': {'summary': 'Одноместный', 'value': {
         'title': 'Одноместный стандартный',
         'description': 'Одноместный, с душем, тумбой и шкафом, без завтрака',
         'price': 3400,
-        'quantity': 2
+        'quantity': 2,
+        'facilities_ids': []
     }},
     '2': {'summary': 'Люкс', 'value': {
         'title': 'Двухместный люкс',
         'description': 'Двуспальная кровать, душ, джакузи, балкон, шкаф-купе, тумбочка, необходимая техника, завтрак в кровать',
         'price': 6400,
-        'quantity': 1
+        'quantity': 1,
+        'facilities_ids': []
     }}
 })):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
-    new_room = await db.rooms.add(_room_data)
+    room: Room = await db.rooms.add(_room_data)
+    rooms_facilities_data = [RoomsFacilitiesAdd(room_id=room.id, facility_id=fid) for fid in room_data.facilities_ids]
+    await db.rooms_facilities.add_bulk(rooms_facilities_data)
     await db.commit()
-    return {'status': 'OK', 'data': new_room}
+    return {'status': 'OK', 'data': room}
 
 
-@router.put("/{hotel_id}/rooms/{room_id}", summary='Обновить информацию о номере', description='Обновлять привязку к отелю hotel_id нельзя')
+@router.put("/{hotel_id}/rooms/{room_id}", summary='Обновить информацию о номере', 
+            description='Обновлять привязку к отелю hotel_id нельзя')
 async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAddRequest):
-    await db.rooms.edit(room_data, id=room_id, hotel_id=hotel_id)
+    _room_data = RoomAdd(**room_data.model_dump(exclude='facilities_ids'), hotel_id=hotel_id)
+    await db.rooms.edit(_room_data, id=room_id, hotel_id=hotel_id)
+    await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()
     return {'status': 'OK'}
 
 
-@router.patch("/{hotel_id}/rooms/{room_id}", summary='Частично обновить информацию о номере', description='Обновлять привязку к отелю hotel_id нельзя')
+@router.patch("/{hotel_id}/rooms/{room_id}", summary='Частично обновить информацию о номере', 
+              description='Обновлять привязку к отелю hotel_id нельзя')
 async def update_room_part(db: DBDep, hotel_id: int, room_id: int, room_data: RoomPatchRequest):
-    await db.rooms.edit(room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+    _room_data = RoomPatch(**room_data.model_dump(exclude='facilities_ids', exclude_unset=True), hotel_id=hotel_id)
+    await db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+    await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()
     return {'status': 'OK'}
 

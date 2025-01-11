@@ -35,7 +35,7 @@ async def get_hotel(db: DBDep, hotel_id: int):
 
 
 @router.post("", summary='Добавить отель')
-async def create_hotel(db: DBDep, hotel_data: HotelAdd = Body(openapi_examples={
+async def add_hotel(db: DBDep, hotel_data: HotelAdd = Body(openapi_examples={
     '1': {'summary': 'Сочи', 'value': {
         'title': 'Русь 5 звезд',
         'location': 'Сочи, ул. Морская, 3'
