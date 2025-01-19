@@ -28,7 +28,7 @@ class BaseRepository:
             .filter_by(**filter_by)
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return [self.schema.model_validate(model) for model in result.scalars().all()]
     
     async def get_all(self, *args, **kwargs):
         '''Получить все сущности'''

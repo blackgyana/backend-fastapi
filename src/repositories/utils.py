@@ -51,7 +51,7 @@ def filtered_free_rooms_ids(date_from: date, date_to: date, hotel_id: int | None
             select(rooms_left_stmt.c.room_id)
             .select_from(rooms_left_stmt)
             .filter(rooms_left_stmt.c.rooms_left > 0,
-                    rooms_left_stmt.c.room_id.in_(hotel_rooms_ids))
+                    rooms_left_stmt.c.room_id.in_(select(hotel_rooms_ids)))
         )
         
         return filtered_free_rooms_ids
