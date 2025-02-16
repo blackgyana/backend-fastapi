@@ -2,7 +2,7 @@ from datetime import date
 from sqlalchemy import select
 from src.models.rooms import RoomsOrm
 from src.repositories.utils import filtered_free_rooms_ids
-from schemas.hotels import Hotel
+from src.schemas.hotels import Hotel
 from src.repositories.base import BaseRepository
 from src.models.hotels import HotelsOrm
 
