@@ -5,10 +5,7 @@ from src.api.dependencies import DBDep, UserIdDep
 from src.schemas.bookings import BookingsAdd, BookingsAddRequest, Bookings
 from src.schemas.rooms import Room
 
-router = APIRouter(
-    prefix='/bookings',
-    # dependencies=[Security(get_current_user_id)]
-    )
+router = APIRouter(prefix='/bookings')
 
 @router.get('/', summary='Получить все бронирования')
 @cache(expire=30)

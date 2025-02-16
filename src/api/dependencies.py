@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, HTTPException, Query, Request, Security
+from fastapi import Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 import jwt
 from src.services.auth import AuthService
