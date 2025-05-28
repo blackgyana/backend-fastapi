@@ -1,11 +1,14 @@
 from typing import Annotated
-from fastapi import Depends, HTTPException, Query, Request
+from fastapi import Depends, HTTPException, Query, Request, Security
 from pydantic import BaseModel
 import jwt
 from src.services.auth import AuthService
 from src.utils.db_manager import DBManager
 from src.database import async_session_maker
 from src.config import settings
+from fastapi.security import APIKeyCookie
+
+
 
 class PaginationParams(BaseModel):
     page: Annotated[int | None, Query(1, gt=0, description='Текущая страница')]
@@ -14,8 +17,10 @@ class PaginationParams(BaseModel):
 
 PaginationDep = Annotated[PaginationParams, Depends()]
 
-def get_token(request:Request):
-    access_token = request.cookies.get(settings.COOKIE_NAME)
+cookie_security = APIKeyCookie(name=settings.COOKIE_NAME)
+
+def get_token(access_token: str = Security(cookie_security)):
+    # access_token = request.cookies.get(settings.COOKIE_NAME)
     if not access_token:
         raise HTTPException(401, 'Unauthorized')
     return access_token

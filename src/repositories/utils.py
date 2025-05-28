@@ -1,8 +1,8 @@
 from datetime import date
 
 from sqlalchemy import func, select
-from src.models.rooms import RoomsOrm
-from src.models.bookings import BookingsOrm
+from src.models.rooms import RoomsORM
+from src.models.bookings import BookingsORM
 
 
 def filtered_free_rooms_ids(date_from: date, date_to: date, hotel_id: int | None = None):
@@ -22,25 +22,25 @@ def filtered_free_rooms_ids(date_from: date, date_to: date, hotel_id: int | None
         select * from rooms_left_count where rooms_left > 0;
         '''
         rooms_booked = (
-            select(BookingsOrm.room_id, func.count('*').label('booked_count'))
-            .select_from(BookingsOrm)
-            .filter(BookingsOrm.date_from < date_to, 
-                    BookingsOrm.date_to > date_from)
-            .group_by(BookingsOrm.room_id)
+            select(BookingsORM.room_id, func.count('*').label('booked_count'))
+            .select_from(BookingsORM)
+            .filter(BookingsORM.date_from < date_to, 
+                    BookingsORM.date_to > date_from)
+            .group_by(BookingsORM.room_id)
             .cte(name='rooms_booked')
         )
         rooms_left_stmt = (
-            select(RoomsOrm.id.label('room_id'), 
-                (RoomsOrm.quantity - func.coalesce(rooms_booked.c.booked_count, 0))
+            select(RoomsORM.id.label('room_id'), 
+                (RoomsORM.quantity - func.coalesce(rooms_booked.c.booked_count, 0))
                 .label('rooms_left'))
-            .select_from(RoomsOrm)
-            .outerjoin(rooms_booked, RoomsOrm.id == rooms_booked.c.room_id)
+            .select_from(RoomsORM)
+            .outerjoin(rooms_booked, RoomsORM.id == rooms_booked.c.room_id)
             .cte(name='rooms_left_stmt')
         )
 
         hotel_rooms_ids = (
-            select(RoomsOrm.id.label('room_id'))
-            .select_from(RoomsOrm)
+            select(RoomsORM.id.label('room_id'))
+            .select_from(RoomsORM)
         )
         if hotel_id is not None:    
             hotel_rooms_ids = hotel_rooms_ids.filter_by(hotel_id = hotel_id)

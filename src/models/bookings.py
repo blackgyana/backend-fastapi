@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 from src.database import Base
 
-class BookingsOrm(Base):
+class BookingsORM(Base):
     __tablename__ = 'bookings'
 
     id: Mapped[int] = mapped_column(primary_key=True)

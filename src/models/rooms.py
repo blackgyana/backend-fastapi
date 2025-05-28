@@ -4,7 +4,7 @@ from sqlalchemy import CheckConstraint, ForeignKey, Integer
 from src.database import Base
 
 
-class RoomsOrm(Base):
+class RoomsORM(Base):
     __tablename__ = 'rooms'
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -14,7 +14,7 @@ class RoomsOrm(Base):
     price: Mapped[int] = mapped_column(Integer, CheckConstraint("price >= 1", name="check_price"), default=1000)
     quantity: Mapped[int] = mapped_column(Integer, CheckConstraint("quantity >= 0", name="check_quantity"), default=1)
 
-    facilities: Mapped[list['FacilitiesOrm']] = relationship(
+    facilities: Mapped[list['FacilitiesORM']] = relationship(
         back_populates='rooms',
         secondary='rooms_facilities'
     )

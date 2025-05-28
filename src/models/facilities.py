@@ -4,19 +4,19 @@ from sqlalchemy import ForeignKey, String
 from src.database import Base
 
 
-class FacilitiesOrm(Base):
+class FacilitiesORM(Base):
     __tablename__ = 'facilities'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100), unique=True)
 
-    rooms: Mapped[list['RoomsOrm']] = relationship(
+    rooms: Mapped[list['RoomsORM']] = relationship(
         back_populates='facilities',
         secondary='rooms_facilities'
     )
 
 
-class RoomsFacilitiesOrm(Base):
+class RoomsFacilitiesORM(Base):
     __tablename__ = 'rooms_facilities'
 
     id: Mapped[int] = mapped_column(primary_key=True)

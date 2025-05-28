@@ -1,15 +1,15 @@
 from datetime import date
 from sqlalchemy import select
-from src.models.rooms import RoomsOrm
+from src.repositories.mappers.mappers import HotelsDataMapper
+from src.models.rooms import RoomsORM
 from src.repositories.utils import filtered_free_rooms_ids
-from src.schemas.hotels import Hotel
 from src.repositories.base import BaseRepository
-from src.models.hotels import HotelsOrm
+from src.models.hotels import HotelsORM
 
 
 class HotelsRepository(BaseRepository):
-    model = HotelsOrm
-    schema = Hotel
+    model = HotelsORM
+    mapper = HotelsDataMapper
 
     async def get_filtered_by_dates(
             self,
@@ -25,20 +25,20 @@ class HotelsRepository(BaseRepository):
             date_from=date_from, date_to=date_to)
 
         filtered_rooms_hotels_ids = (
-            select(RoomsOrm.hotel_id)
-            .select_from(RoomsOrm)
-            .filter(RoomsOrm.id.in_(filtered_rooms_ids))
+            select(RoomsORM.hotel_id)
+            .select_from(RoomsORM)
+            .filter(RoomsORM.id.in_(filtered_rooms_ids))
         )
-        query = select(HotelsOrm).filter(
-            HotelsOrm.id.in_(filtered_rooms_hotels_ids))
+        query = select(HotelsORM).filter(
+            HotelsORM.id.in_(filtered_rooms_hotels_ids))
         if title:
             query = query.filter(
-                HotelsOrm.title.icontains(title.strip()),
+                HotelsORM.title.icontains(title.strip()),
             )
         if location:
             query = query.filter(
-                HotelsOrm.location.icontains(location.strip()),
+                HotelsORM.location.icontains(location.strip()),
             )
         query = query.limit(limit).offset(offset)
         result = await self.session.execute(query)
-        return [Hotel.model_validate(model) for model in result.scalars().all()]
+        return [self.mapper.to_domain_entity(model) for model in result.scalars().all()]

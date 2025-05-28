@@ -2,16 +2,14 @@
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class HotelAdd(BaseModel):
+class HotelAddDTO(BaseModel):
     title: str
     location: str
 
 
-class Hotel(HotelAdd):
+class HotelDTO(HotelAddDTO):
     id: int
 
-    # приводить к pydantic схеме из атрибутов ORM модели
-    model_config = ConfigDict(from_attributes=True, extra='forbid')
 
 
 class HotelPATCH(BaseModel):

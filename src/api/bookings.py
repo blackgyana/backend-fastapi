@@ -2,29 +2,29 @@ from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.schemas.bookings import BookingsAdd, BookingsAddRequest, Bookings
-from src.schemas.rooms import Room
+from src.schemas.bookings import BookingAdd, BookingAddRequest, BookingDTO
+from src.schemas.rooms import RoomDTO
 
 router = APIRouter(prefix='/bookings')
 
 @router.get('/', summary='Получить все бронирования')
 @cache(expire=30)
-async def get_bookings(db: DBDep) -> list[Bookings]:
+async def get_bookings(db: DBDep) -> list[BookingDTO]:
     return await db.bookings.get_filtered()
 
 
 @router.get('/me', summary='Получить все мои бронирования')
 @cache(expire=30)
-async def get_my_bookings(uid: UserIdDep, db: DBDep) -> list[Bookings]:
+async def get_my_bookings(uid: UserIdDep, db: DBDep) -> list[BookingDTO]:
     return await db.bookings.get_filtered(user_id=uid)
 
 
 @router.post('', summary='Добавить бронирование')
-async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingsAddRequest):
-    room: Room = await db.rooms.get(id=booking_data.room_id)
-    _booking_data = BookingsAdd(
+async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingAddRequest):
+    room: RoomDTO = await db.rooms.get(id=booking_data.room_id)
+    _booking_data = BookingAdd(
         **booking_data.model_dump(), user_id=uid, price=room.price)
-    booking: Bookings = await db.bookings.add(_booking_data)
+    booking: BookingDTO = await db.bookings.add(_booking_data)
     await db.commit()
     return {'status': 'OK', 'data': booking}
 

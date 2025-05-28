@@ -6,10 +6,9 @@ class FacilityAdd(BaseModel):
     title: str
 
 
-class Facility(FacilityAdd):
+class FacilityDTO(FacilityAdd):
     id: int
 
-    model_config = ConfigDict(from_attributes=True, extra='forbid')
 
 
 class RoomsFacilitiesAdd(BaseModel):
@@ -17,5 +16,5 @@ class RoomsFacilitiesAdd(BaseModel):
     facility_id: int
 
 
-class RoomsFacilities(RoomsFacilitiesAdd):
+class RoomsFacilitiesDTO(RoomsFacilitiesAdd):
     id: int

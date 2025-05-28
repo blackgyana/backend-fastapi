@@ -2,7 +2,7 @@ from datetime import date
 from fastapi_cache.decorator import cache
 from fastapi import Body, Query, APIRouter
 
-from src.schemas.hotels import Hotel, HotelAdd, HotelPATCH
+from src.schemas.hotels import HotelDTO, HotelAddDTO, HotelPATCH
 from src.api.dependencies import PaginationDep, DBDep
 
 
@@ -18,7 +18,7 @@ async def get_hotels(
     date_to: date = Query(example='2025-03-10'),
     title: str | None = Query(None, description='Название отеля'),
     location: str | None = Query(None, description='Расположение отеля')
-) -> list[Hotel]:
+) -> list[HotelDTO]:
 
     limit = pagination.per_page
     offset = pagination.per_page * (pagination.page - 1)
@@ -39,7 +39,7 @@ async def get_hotel(db: DBDep, hotel_id: int):
 
 
 @router.post("", summary='Добавить отель')
-async def add_hotel(db: DBDep, hotel_data: HotelAdd = Body(openapi_examples={
+async def add_hotel(db: DBDep, hotel_data: HotelAddDTO = Body(openapi_examples={
     '1': {'summary': 'Сочи', 'value': {
         'title': 'Русь 5 звезд',
         'location': 'Сочи, ул. Морская, 3'
@@ -55,7 +55,7 @@ async def add_hotel(db: DBDep, hotel_data: HotelAdd = Body(openapi_examples={
 
 
 @router.put("/{hotel_id}", summary='Обновить информацию об отеле')
-async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAdd):
+async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAddDTO):
     await db.hotels.edit(hotel_data, id=hotel_id)
     await db.commit()
     return {'status': 'OK'}

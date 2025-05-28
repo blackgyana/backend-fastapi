@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Response
 from database import async_session_maker
 from src.repositories.users import UsersRepository
-from src.schemas.users import BaseUser, User, UserAdd, UserRequestAdd, UserRequestLogin
+from src.schemas.users import BaseUser, UserDTO, UserAdd, UserRequestAdd, UserRequestLogin
 from src.services.auth import AuthService
 from src.api.dependencies import UserIdDep
-
+from src.config import settings
 
 router = APIRouter(prefix='/auth')
 
@@ -25,7 +25,7 @@ async def register_user(user_data: UserRequestAdd):
 @router.post('/login')
 async def login_user(user_data: UserRequestLogin, response: Response):
     async with async_session_maker() as session:
-        user: User | None = (
+        user: UserDTO | None = (
             await UsersRepository(session)
             .get_user_with_hashed_password(email=user_data.email)
         )
@@ -35,8 +35,15 @@ async def login_user(user_data: UserRequestLogin, response: Response):
         if not AuthService().verify_password(user_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=401, detail='Неверные данные входа')
+        
         access_token = AuthService().create_access_token({'uid': user.id})
-        response.set_cookie('access_token', access_token)
+        response.set_cookie(
+            'access_token', 
+            access_token,
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            samesite='lax',
+            httponly=True
+            )
     return {'access_token': access_token}
 
 

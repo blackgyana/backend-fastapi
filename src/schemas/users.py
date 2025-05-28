@@ -17,13 +17,11 @@ class UserRequestLogin(BaseModel):
 class UserAdd(BaseUser):
     hashed_password: str
 
-    model_config = ConfigDict(from_attributes=True)
 
 
-class User(BaseUser):
+class UserDTO(BaseUser):
     id: int
 
-    model_config = ConfigDict(from_attributes=True)
 
-class UserWithHashedPassword(User):
+class UserWithHashedPasswordDTO(UserDTO):
     hashed_password: str

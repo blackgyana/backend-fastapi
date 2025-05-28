@@ -4,10 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
+from src.database import Base
+from src.repositories.mappers.base import DataMapper
+
 
 class BaseRepository:
-    model = None
-    schema: BaseModel = None
+    model: type[Base]
+    mapper: type[DataMapper]
 
     def __init__(self, session):
         self.session: AsyncSession = session
@@ -28,7 +31,7 @@ class BaseRepository:
             .filter_by(**filter_by)
         )
         result = await self.session.execute(query)
-        return [self.schema.model_validate(model) for model in result.scalars().all()]
+        return [self.mapper.to_domain_entity(model) for model in result.scalars().all()]
     
     async def get_all(self, *args, **kwargs):
         '''Получить все сущности'''
@@ -41,14 +44,14 @@ class BaseRepository:
         res = result.scalars().one_or_none()
         if not res:
             raise HTTPException(404, 'Item not found')
-        return self.schema.model_validate(res)
+        return self.mapper.to_domain_entity(res)
 
     async def get_one_or_none(self, **filter_by):
         '''Получить 1 сущность или ничего'''
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         res = result.scalars().one_or_none()
-        return self.schema.model_validate(res) if res else None
+        return self.mapper.to_domain_entity(res) if res else None
         
 
     async def add(self, data: BaseModel):
@@ -62,7 +65,7 @@ class BaseRepository:
             result = await self.session.execute(add_stmt)
         except IntegrityError:
             raise HTTPException(status_code=400, detail="Bad request. Item not found or already exists.")
-        return self.schema.model_validate(result.scalars().one())
+        return self.mapper.to_domain_entity(result.scalars().one())
 
     async def add_bulk(self, data: list[BaseModel]):
         '''Добавить сущность'''
@@ -82,7 +85,6 @@ class BaseRepository:
             update(self.model)
             .filter_by(**filter_by)
             .values(**data.model_dump(exclude_unset=exclude_unset))
-            .returning(self.model.id)
         )
         try:
             result = await self.session.execute(edit_stmt)
@@ -96,7 +98,6 @@ class BaseRepository:
             delete(self.model)
             .filter(*filter)
             .filter_by(**filter_by)
-            .returning(self.model.id)
         )
         result = await self.session.execute(del_stmt)
         self._validate_one(result)
