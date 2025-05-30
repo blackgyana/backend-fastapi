@@ -23,8 +23,8 @@ async def setup_database(check_mode):
 
 @pytest.fixture(scope='session', autouse=True)
 async def create_user(setup_database):
-    async with AsyncClient(transport=ASGITransport(app=app)) as http:
-        http.post(
+    async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as http:
+        await http.post(
             url='/auth/register',
             json={
                 'email': 'test@mail.com',
