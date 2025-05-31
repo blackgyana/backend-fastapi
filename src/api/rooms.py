@@ -54,7 +54,7 @@ async def add_room(db: DBDep, hotel_id: int, room_data: RoomAddRequest = Body(op
             description='Обновлять привязку к отелю hotel_id нельзя')
 async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAddRequest):
     _room_data = RoomAddDTO(**room_data.model_dump(), hotel_id=hotel_id)
-    await db.rooms.edit(_room_data, id=room_id, hotel_id=hotel_id)
+    await db.rooms.update(_room_data, id=room_id, hotel_id=hotel_id)
     await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()
     return {'status': 'OK'}
@@ -65,7 +65,7 @@ async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAdd
 async def update_room_part(db: DBDep, hotel_id: int, room_id: int, room_data: RoomPatchRequest):
     clear_data = room_data.model_dump(exclude_unset=True)
     _room_data = RoomPatch(**clear_data, hotel_id=hotel_id)
-    await db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+    await db.rooms.update(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
     if 'facilities_ids' in clear_data:
         await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()

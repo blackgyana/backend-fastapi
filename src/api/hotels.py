@@ -56,14 +56,14 @@ async def add_hotel(db: DBDep, hotel_data: HotelAddDTO = Body(openapi_examples={
 
 @router.put("/{hotel_id}", summary='Обновить информацию об отеле')
 async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAddDTO):
-    await db.hotels.edit(hotel_data, id=hotel_id)
+    await db.hotels.update(hotel_data, id=hotel_id)
     await db.commit()
     return {'status': 'OK'}
 
 
 @router.patch("/{hotel_id}", summary='Частично обновить информацию об отеле', description='Можно менять каждое поле в отдельности или все поля разом')
 async def update_hotel_part(db: DBDep, hotel_id: int, hotel_data: HotelPATCH):
-    await db.hotels.edit(hotel_data, exclude_unset=True, id=hotel_id)
+    await db.hotels.update(hotel_data, exclude_unset=True, id=hotel_id)
     await db.commit()
     return {'status': 'OK'}
 

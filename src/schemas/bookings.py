@@ -8,15 +8,20 @@ class BookingAddRequest(BaseModel):
     date_to: date
 
 
-class BookingAdd(BookingAddRequest):
+class BookingAddDTO(BookingAddRequest):
     user_id: int
     price: int
 
+class BookingUpdateDTO(BaseModel):
+    user_id: int = None
+    room_id: int  = None
+    date_from: date  = None
+    date_to: date  = None
+    price: int  = None
 
-class BookingDTO(BookingAdd):
+
+class BookingDTO(BookingAddDTO):
     id: int
     total_cost: int
     created_at: datetime
 
-    # приводить к pydantic схеме из атрибутов ORM модели и не принимать лишние поля
-    # model_config = ConfigDict(from_attributes=True, extra='forbid')

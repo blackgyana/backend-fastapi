@@ -17,8 +17,7 @@ class BaseRepository:
 
     def _validate_one(self, result: Result):
         '''Валидация ответа на единственную сущность'''
-        count = len(result.scalars().all()
-                    )  # sequence отдает результат только 1 раз
+        count = len(result.scalars().all())  # sequence отдает результат только 1 раз
         if count == 0:
             raise HTTPException(status_code=404, detail="Item not found")
         elif count > 1:
@@ -72,25 +71,29 @@ class BaseRepository:
         add_stmt = (
             insert(self.model)
             .values([obj.model_dump() for obj in data])
+            .returning(self.model)
         )
         try:
-            await self.session.execute(add_stmt)
+            result = await self.session.execute(add_stmt)
         except IntegrityError:
             raise HTTPException(status_code=400, detail="Bad request. Item already exists.")
+        return [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
 
 
-    async def edit(self, data: BaseModel, exclude_unset=False, **filter_by) -> None:
+    async def update(self, data: BaseModel, exclude_unset=False, **filter_by):
         '''Изменить сущность'''
         edit_stmt = (
             update(self.model)
             .filter_by(**filter_by)
             .values(**data.model_dump(exclude_unset=exclude_unset))
+            .returning(self.model)
         )
         try:
             result = await self.session.execute(edit_stmt)
         except IntegrityError:
             raise HTTPException(400, 'Неверные данные в теле запроса')
-        self._validate_one(result)
+        return self.mapper.to_domain_entity(result.scalars().one())
+
 
     async def delete(self, *filter, **filter_by) -> None:
         '''Удалить сущность'''
@@ -99,5 +102,4 @@ class BaseRepository:
             .filter(*filter)
             .filter_by(**filter_by)
         )
-        result = await self.session.execute(del_stmt)
-        self._validate_one(result)
+        await self.session.execute(del_stmt)
