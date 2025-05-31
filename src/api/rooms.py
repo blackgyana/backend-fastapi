@@ -4,7 +4,7 @@ from fastapi import Body, Query, APIRouter
 
 from src.schemas.facilities import RoomsFacilitiesAdd
 from src.api.dependencies import DBDep
-from src.schemas.rooms import RoomDTO, RoomAdd, RoomAddRequest, RoomPatch, RoomPatchRequest, RoomWithRels
+from src.schemas.rooms import RoomDTO, RoomAddDTO, RoomAddRequest, RoomPatch, RoomPatchRequest, RoomWithRels
 
 router = APIRouter(prefix='/hotels')
 
@@ -42,7 +42,7 @@ async def add_room(db: DBDep, hotel_id: int, room_data: RoomAddRequest = Body(op
         'facilities_ids': []
     }}
 })):
-    _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
+    _room_data = RoomAddDTO(hotel_id=hotel_id, **room_data.model_dump())
     room: RoomDTO = await db.rooms.add(_room_data)
     rooms_facilities_data = [RoomsFacilitiesAdd(room_id=room.id, facility_id=fid) for fid in room_data.facilities_ids]
     await db.rooms_facilities.add_bulk(rooms_facilities_data)
@@ -53,7 +53,7 @@ async def add_room(db: DBDep, hotel_id: int, room_data: RoomAddRequest = Body(op
 @router.put("/{hotel_id}/rooms/{room_id}", summary='Обновить информацию о номере', 
             description='Обновлять привязку к отелю hotel_id нельзя')
 async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAddRequest):
-    _room_data = RoomAdd(**room_data.model_dump(), hotel_id=hotel_id)
+    _room_data = RoomAddDTO(**room_data.model_dump(), hotel_id=hotel_id)
     await db.rooms.edit(_room_data, id=room_id, hotel_id=hotel_id)
     await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()

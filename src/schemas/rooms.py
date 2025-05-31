@@ -11,14 +11,14 @@ class RoomAddRequest(BaseModel):
     facilities_ids: list[int] = []
 
 
-class RoomAdd(BaseModel):
+class RoomAddDTO(BaseModel):
     hotel_id: int
     title: str
     description: str | None = None
     price: int
     quantity: int
 
-class RoomDTO(RoomAdd):
+class RoomDTO(RoomAddDTO):
     id: int
 
 
