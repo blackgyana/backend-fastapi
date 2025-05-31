@@ -92,7 +92,10 @@ class BaseRepository:
             result = await self.session.execute(edit_stmt)
         except IntegrityError:
             raise HTTPException(400, 'Неверные данные в теле запроса')
-        return self.mapper.to_domain_entity(result.scalars().one())
+        data = [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
+        if len(data) == 1:
+            return data[0]
+
 
 
     async def delete(self, *filter, **filter_by) -> None:

@@ -2,11 +2,11 @@
 from pydantic import BaseModel, ConfigDict
 
 
-class FacilityAdd(BaseModel):
+class FacilityAddDTO(BaseModel):
     title: str
 
 
-class FacilityDTO(FacilityAdd):
+class FacilityDTO(FacilityAddDTO):
     id: int
 
 

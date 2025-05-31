@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 import pytest
+from src.api.dependencies import get_db
 from src.schemas.hotels import HotelAddDTO
 from src.schemas.rooms import RoomAddDTO
 from src.database import Base, engine_null_pool
@@ -24,6 +25,14 @@ async def check_mode():
 async def db() -> AsyncGenerator[DBManager, None]:
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
+
+
+async def get_db_null_pool():
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
+        yield db
+
+app.dependency_overrides[get_db] = get_db_null_pool
+
 
 
 @pytest.fixture(scope='session')
