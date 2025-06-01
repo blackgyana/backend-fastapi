@@ -1,3 +1,9 @@
+from http import cookies
+from unittest.mock import patch
+
+# @cache mock
+patch('fastapi_cache.decorator.cache', lambda *args, **kwargs: lambda f: f).start()
+
 from typing import AsyncGenerator
 import pytest
 from src.api.dependencies import get_db
@@ -63,11 +69,27 @@ async def load_mock_data(setup_database):
         await db.commit()
 
 
+user_auth_data = {
+            'email': 'test@mail.com',
+            'password': 'pass1234'
+        }
+
 @pytest.fixture(scope='session', autouse=True)
 async def create_user(load_mock_data, http: AsyncClient):
     await http.post(
         url='/auth/register',
-        json={
-            'email': 'test@mail.com',
-            'password': 'pass1234'
-        })
+        json=user_auth_data
+        )
+    
+@pytest.fixture(scope='session', autouse=True)
+async def authenticated_user(create_user, http: AsyncClient):
+    response = await http.post(
+        url='/auth/login',
+        json=user_auth_data
+    )
+    res = response.json()
+    assert response.status_code == 200
+    assert 'access_token' in res
+    assert response.cookies.get('access_token') 
+    assert http.cookies.get('access_token')
+    yield http

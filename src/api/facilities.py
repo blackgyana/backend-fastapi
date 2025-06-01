@@ -8,7 +8,7 @@ router = APIRouter(prefix='/facilities')
 
 
 @router.get('', summary='Получить все удобства')
-# @cache(expire=300)
+@cache(expire=300)
 async def get_facilities(db: DBDep) -> list[FacilityDTO]:
     result = await db.facilities.get_all()
     return result
