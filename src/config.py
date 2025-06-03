@@ -1,5 +1,7 @@
 from typing import Literal
+from unittest.mock import patch
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 
 class Settings(BaseSettings):

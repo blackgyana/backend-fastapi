@@ -45,7 +45,8 @@ async def add_room(db: DBDep, hotel_id: int, room_data: RoomAddRequest = Body(op
     _room_data = RoomAddDTO(hotel_id=hotel_id, **room_data.model_dump())
     room: RoomDTO = await db.rooms.add(_room_data)
     rooms_facilities_data = [RoomsFacilitiesAdd(room_id=room.id, facility_id=fid) for fid in room_data.facilities_ids]
-    await db.rooms_facilities.add_bulk(rooms_facilities_data)
+    if rooms_facilities_data:
+        await db.rooms_facilities.add_bulk(rooms_facilities_data)
     await db.commit()
     return {'status': 'OK', 'data': room}
 

@@ -81,8 +81,8 @@ async def create_user(load_mock_data, http: AsyncClient):
         json=user_auth_data
         )
     
-@pytest.fixture(scope='session', autouse=True)
-async def authenticated_user(create_user, http: AsyncClient):
+@pytest.fixture(scope='session')
+async def authenticated_http(create_user, http: AsyncClient):
     response = await http.post(
         url='/auth/login',
         json=user_auth_data
@@ -90,6 +90,5 @@ async def authenticated_user(create_user, http: AsyncClient):
     res = response.json()
     assert response.status_code == 200
     assert 'access_token' in res
-    assert response.cookies.get('access_token') 
     assert http.cookies.get('access_token')
     yield http

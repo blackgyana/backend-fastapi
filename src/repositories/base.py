@@ -1,3 +1,4 @@
+from re import A
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update, Result
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,7 +63,9 @@ class BaseRepository:
         )
         try:
             result = await self.session.execute(add_stmt)
-        except IntegrityError:
+        except IntegrityError as e:
+            if 'foreign key constraint' in str(e):
+                raise HTTPException(status_code=400, detail="Bad request. Hotel with such id not found.")
             raise HTTPException(status_code=400, detail="Bad request. Item not found or already exists.")
         return self.mapper.to_domain_entity(result.scalars().one())
 
@@ -90,7 +93,7 @@ class BaseRepository:
         )
         try:
             result = await self.session.execute(edit_stmt)
-        except IntegrityError:
+        except IntegrityError or Exception:
             raise HTTPException(400, 'Неверные данные в теле запроса')
         data = [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
         if len(data) == 1:

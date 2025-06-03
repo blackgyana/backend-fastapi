@@ -22,9 +22,8 @@ async def get_my_bookings(uid: UserIdDep, db: DBDep) -> list[BookingDTO]:
 @router.post('', summary='Добавить бронирование')
 async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingAddRequest):
     room: RoomDTO = await db.rooms.get(id=booking_data.room_id)
-    _booking_data = BookingAddDTO(
-        **booking_data.model_dump(), user_id=uid, price=room.price)
-    booking: BookingDTO = await db.bookings.add(_booking_data)
+    _booking_data = BookingAddDTO(**booking_data.model_dump(), user_id=uid, price=room.price)
+    booking: BookingDTO = await db.bookings.add_booking(_booking_data)
     await db.commit()
     return {'status': 'OK', 'data': booking}
 
