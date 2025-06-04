@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 from src.utils.db_manager import DBManager
-
+from src.database import async_session_maker_null_pool
 
 @pytest.mark.parametrize('room_id, hotel_id, date_from, date_to, status_code',[
     (1, 1, '2025-05-20', '2025-05-20', 400),
@@ -32,10 +32,11 @@ async def test_add_booking(
         assert 'data' in res and res['data']
 
 
-@pytest.fixture(scope='session')
-async def test_clear_bookings(db: DBManager):
-    await db.bookings.delete()
-    await db.commit()
+@pytest.fixture(scope='module')
+async def test_clear_bookings():
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
+        await db.bookings.delete()
+        await db.commit()
 
 
 @pytest.mark.parametrize('room_id, hotel_id, date_from, date_to, status_code, bookings_count',[

@@ -27,7 +27,7 @@ async def check_mode():
     assert settings.MODE == 'TEST' and settings.DB_NAME == 'test'
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 async def db() -> AsyncGenerator[DBManager, None]:
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
