@@ -1,7 +1,7 @@
 """init add hotels
 
 Revision ID: cdb8f6004fab
-Revises: 
+Revises:
 Create Date: 2024-12-08 18:34:57.496849
 
 """

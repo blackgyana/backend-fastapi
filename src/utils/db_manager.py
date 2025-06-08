@@ -1,5 +1,3 @@
-
-
 from src.repositories.facilities import FacilitiesRepository, RoomsFacilitiesRepository
 from src.repositories.users import UsersRepository
 from src.repositories.hotels import HotelsRepository

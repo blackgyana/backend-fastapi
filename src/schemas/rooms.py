@@ -1,7 +1,7 @@
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from src.schemas.facilities import FacilityDTO
+
 
 class RoomAddRequest(BaseModel):
     title: str
@@ -18,9 +18,9 @@ class RoomAddDTO(BaseModel):
     price: int
     quantity: int
 
+
 class RoomDTO(RoomAddDTO):
     id: int
-
 
 
 class RoomWithRels(RoomDTO):
@@ -35,12 +35,9 @@ class RoomPatchRequest(BaseModel):
     facilities_ids: list[int] = []
 
 
-
 class RoomPatch(BaseModel):
     hotel_id: int | None = None
     title: str | None = None
     description: str | None = None
     price: int | None = None
     quantity: int | None = None
-
-

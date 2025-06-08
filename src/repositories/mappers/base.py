@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from src.database import Base
 
 
-
 class DataMapper:
     db_model: type[Base]
     schema: type[BaseModel]

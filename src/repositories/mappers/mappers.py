@@ -20,9 +20,11 @@ class RoomsDataMapper(DataMapper):
     db_model = RoomsORM
     schema = RoomDTO
 
+
 class UsersDataMapper(DataMapper):
     db_model = UsersORM
     schema = UserDTO
+
 
 class UserWithHashedPasswordDataMapper(DataMapper):
     db_model = UsersORM

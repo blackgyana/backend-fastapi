@@ -1,5 +1,4 @@
-
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 
 
 class HotelAddDTO(BaseModel):
@@ -9,7 +8,6 @@ class HotelAddDTO(BaseModel):
 
 class HotelDTO(HotelAddDTO):
     id: int
-
 
 
 class HotelPATCH(BaseModel):

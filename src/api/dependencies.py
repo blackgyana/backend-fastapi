@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, HTTPException, Query, Request, Security
+from fastapi import Depends, HTTPException, Query, Security
 from pydantic import BaseModel
 import jwt
 from src.services.auth import AuthService
@@ -9,33 +9,34 @@ from src.config import settings
 from fastapi.security import APIKeyCookie
 
 
-
 class PaginationParams(BaseModel):
-    page: Annotated[int | None, Query(1, gt=0, description='Текущая страница')]
-    per_page: Annotated[int | None, Query(3, gt=0, lte=10, description='Количество на странице')]
+    page: Annotated[int | None, Query(1, gt=0, description="Текущая страница")]
+    per_page: Annotated[int | None, Query(3, gt=0, lte=10, description="Количество на странице")]
 
 
 PaginationDep = Annotated[PaginationParams, Depends()]
 
 cookie_security = APIKeyCookie(name=settings.COOKIE_NAME)
 
+
 def get_token(access_token: str = Security(cookie_security)):
     # access_token = request.cookies.get(settings.COOKIE_NAME)
     if not access_token:
-        raise HTTPException(401, 'Unauthorized')
+        raise HTTPException(401, "Unauthorized")
     return access_token
 
-def get_current_user_id(token:str = Depends(get_token)):
+
+def get_current_user_id(token: str = Depends(get_token)):
     try:
         data = AuthService().decode_token(token)
     except jwt.exceptions.DecodeError:
-        raise HTTPException(401, 'Invalid token')   
+        raise HTTPException(401, "Invalid token")
     except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(401, 'Token expired')
-    return data['uid']
+        raise HTTPException(401, "Token expired")
+    return data["uid"]
+
 
 UserIdDep = Annotated[int, Depends(get_current_user_id)]
-
 
 
 async def get_db():

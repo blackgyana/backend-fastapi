@@ -1,5 +1,4 @@
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class FacilityAddDTO(BaseModel):
@@ -8,7 +7,6 @@ class FacilityAddDTO(BaseModel):
 
 class FacilityDTO(FacilityAddDTO):
     id: int
-
 
 
 class RoomsFacilitiesAdd(BaseModel):

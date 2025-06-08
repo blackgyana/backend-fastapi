@@ -1,4 +1,3 @@
-
 from datetime import date
 from src.utils.db_manager import DBManager
 from src.schemas.bookings import BookingAddDTO, BookingUpdateDTO
@@ -12,7 +11,7 @@ async def test_booking_crud(db: DBManager):
         user_id=user_id,
         date_from=date(year=2024, month=5, day=20),
         date_to=date(year=2024, month=5, day=25),
-        price=6000      
+        price=6000,
     )
     new_booking = await db.bookings.add(booking_data)
     assert new_booking

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr
 
 
 class BaseUser(BaseModel):
@@ -7,16 +7,18 @@ class BaseUser(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
 
+
 class UserRequestAdd(BaseUser):
     password: str
+
 
 class UserRequestLogin(BaseModel):
     email: EmailStr
     password: str
 
+
 class UserAdd(BaseUser):
     hashed_password: str
-
 
 
 class UserDTO(BaseUser):

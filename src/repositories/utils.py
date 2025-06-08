@@ -6,63 +6,56 @@ from src.models.bookings import BookingsORM
 
 
 def filtered_free_rooms_ids(date_from: date, date_to: date, hotel_id: int | None = None):
-        '''
-        RAW SQL:
-        
-        with rooms_booked as (
-            SELECT room_id, count(*) as booked_count FROM bookings
-            WHERE date_from < '2025-03-10' and date_to > '2025-03-01'
-            GROUP BY room_id
-        ),
-        rooms_left_count as (
-            select rooms.id, (quantity - coalesce(booked_count, 0)) as rooms_left 
-            from rooms 
-            left outer join rooms_booked on rooms.id = rooms_booked.room_id
+    """
+    RAW SQL:
+
+    with rooms_booked as (
+        SELECT room_id, count(*) as booked_count FROM bookings
+        WHERE date_from < '2025-03-10' and date_to > '2025-03-01'
+        GROUP BY room_id
+    ),
+    rooms_left_count as (
+        select rooms.id, (quantity - coalesce(booked_count, 0)) as rooms_left
+        from rooms
+        left outer join rooms_booked on rooms.id = rooms_booked.room_id
+    )
+    select * from rooms_left_count where rooms_left > 0;
+    """
+
+    # Выбираем количество бронирований по каждой комнате, которые пересекаются с указанным периодом
+    rooms_booked = (
+        select(BookingsORM.room_id, func.count("*").label("booked_count"))
+        .select_from(BookingsORM)
+        .filter(BookingsORM.date_from < date_to, BookingsORM.date_to > date_from)
+        .group_by(BookingsORM.room_id)
+        .cte(name="rooms_booked")  # создаем CTE для объединения с таблицей комнат
+    )
+
+    # Вычисляем количество оставшихся доступных комнат (quantity - booked_count), включая те, что вообще не забронированы (COALESCE)
+    rooms_left_stmt = (
+        select(
+            RoomsORM.id.label("room_id"),
+            (RoomsORM.quantity - func.coalesce(rooms_booked.c.booked_count, 0)).label("rooms_left"),
         )
-        select * from rooms_left_count where rooms_left > 0;
-        '''
+        .select_from(RoomsORM)
+        .outerjoin(rooms_booked, RoomsORM.id == rooms_booked.c.room_id)
+        .cte(name="rooms_left_stmt")  # ещё одно CTE
+    )
 
-        # Выбираем количество бронирований по каждой комнате, которые пересекаются с указанным периодом
-        rooms_booked = (
-            select(BookingsORM.room_id, func.count('*').label('booked_count'))
-            .select_from(BookingsORM)
-            .filter(BookingsORM.date_from < date_to, 
-                    BookingsORM.date_to > date_from)
-            .group_by(BookingsORM.room_id)
-            .cte(name='rooms_booked')  # создаем CTE для объединения с таблицей комнат
+    # Получаем список id всех комнат (с фильтрацией по hotel_id, если указан)
+    hotel_rooms_ids = select(RoomsORM.id.label("room_id")).select_from(RoomsORM)
+    if hotel_id is not None:
+        hotel_rooms_ids = hotel_rooms_ids.filter_by(hotel_id=hotel_id)
+
+    hotel_rooms_ids = hotel_rooms_ids.subquery(name="hotel_rooms_ids")
+
+    # Финальный выбор: только те комнаты, которые есть в отеле с указанным id и если есть свободные среди них
+    filtered_free_rooms_ids = (
+        select(rooms_left_stmt.c.room_id)
+        .select_from(rooms_left_stmt)
+        .filter(
+            rooms_left_stmt.c.rooms_left > 0, rooms_left_stmt.c.room_id.in_(select(hotel_rooms_ids))
         )
+    )
 
-        # Вычисляем количество оставшихся доступных комнат (quantity - booked_count), включая те, что вообще не забронированы (COALESCE)
-        rooms_left_stmt = (
-            select(
-                RoomsORM.id.label('room_id'), 
-                (RoomsORM.quantity - func.coalesce(rooms_booked.c.booked_count, 0))
-                .label('rooms_left')
-            )
-            .select_from(RoomsORM)
-            .outerjoin(rooms_booked, RoomsORM.id == rooms_booked.c.room_id)
-            .cte(name='rooms_left_stmt')  # ещё одно CTE
-        )
-
-        # Получаем список id всех комнат (с фильтрацией по hotel_id, если указан)
-        hotel_rooms_ids = (
-            select(RoomsORM.id.label('room_id'))
-            .select_from(RoomsORM)
-        )
-        if hotel_id is not None:
-            hotel_rooms_ids = hotel_rooms_ids.filter_by(hotel_id=hotel_id)
-
-        hotel_rooms_ids = hotel_rooms_ids.subquery(name='hotel_rooms_ids')
-
-        # Финальный выбор: только те комнаты, которые есть в отеле с указанным id и если есть свободные среди них
-        filtered_free_rooms_ids = (
-            select(rooms_left_stmt.c.room_id)
-            .select_from(rooms_left_stmt)
-            .filter(
-                rooms_left_stmt.c.rooms_left > 0,
-                rooms_left_stmt.c.room_id.in_(select(hotel_rooms_ids))
-            )
-        )
-
-        return filtered_free_rooms_ids
-        
+    return filtered_free_rooms_ids

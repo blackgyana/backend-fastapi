@@ -1,4 +1,3 @@
-from re import A
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update, Result
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +16,7 @@ class BaseRepository:
         self.session: AsyncSession = session
 
     def _validate_one(self, result: Result):
-        '''Валидация ответа на единственную сущность'''
+        """Валидация ответа на единственную сущность"""
         count = len(result.scalars().all())  # sequence отдает результат только 1 раз
         if count == 0:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -25,56 +24,49 @@ class BaseRepository:
             raise HTTPException(status_code=400, detail="Bad request")
 
     async def get_filtered(self, *filter, **filter_by):
-        query = (
-            select(self.model)
-            .filter(*filter)
-            .filter_by(**filter_by)
-        )
+        query = select(self.model).filter(*filter).filter_by(**filter_by)
         result = await self.session.execute(query)
         return [self.mapper.to_domain_entity(model) for model in result.scalars().all()]
-    
+
     async def get_all(self, *args, **kwargs):
-        '''Получить все сущности'''
+        """Получить все сущности"""
         return await self.get_filtered()
-    
+
     async def get(self, **filter_by):
-        '''Получить 1 сущность'''
+        """Получить 1 сущность"""
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         res = result.scalars().one_or_none()
         if not res:
-            raise HTTPException(404, 'Item not found')
+            raise HTTPException(404, "Item not found")
         return self.mapper.to_domain_entity(res)
 
     async def get_one_or_none(self, **filter_by):
-        '''Получить 1 сущность или ничего'''
+        """Получить 1 сущность или ничего"""
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         res = result.scalars().one_or_none()
         return self.mapper.to_domain_entity(res) if res else None
-        
 
     async def add(self, data: BaseModel):
-        '''Добавить сущность'''
-        add_stmt = (
-            insert(self.model)
-            .values(**data.model_dump())
-            .returning(self.model)
-        )
+        """Добавить сущность"""
+        add_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         try:
             result = await self.session.execute(add_stmt)
         except IntegrityError as e:
-            if 'foreign key constraint' in str(e):
-                raise HTTPException(status_code=400, detail="Bad request. Hotel with such id not found.")
-            raise HTTPException(status_code=400, detail="Bad request. Item not found or already exists.")
+            if "foreign key constraint" in str(e):
+                raise HTTPException(
+                    status_code=400, detail="Bad request. Hotel with such id not found."
+                )
+            raise HTTPException(
+                status_code=400, detail="Bad request. Item not found or already exists."
+            )
         return self.mapper.to_domain_entity(result.scalars().one())
 
     async def add_bulk(self, data: list[BaseModel]):
-        '''Добавить сущность'''
+        """Добавить сущность"""
         add_stmt = (
-            insert(self.model)
-            .values([obj.model_dump() for obj in data])
-            .returning(self.model)
+            insert(self.model).values([obj.model_dump() for obj in data]).returning(self.model)
         )
         try:
             result = await self.session.execute(add_stmt)
@@ -82,9 +74,8 @@ class BaseRepository:
             raise HTTPException(status_code=400, detail="Bad request. Item already exists.")
         return [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
 
-
     async def update(self, data: BaseModel, exclude_unset=False, **filter_by):
-        '''Изменить сущность'''
+        """Изменить сущность"""
         edit_stmt = (
             update(self.model)
             .filter_by(**filter_by)
@@ -94,18 +85,12 @@ class BaseRepository:
         try:
             result = await self.session.execute(edit_stmt)
         except IntegrityError or Exception:
-            raise HTTPException(400, 'Неверные данные в теле запроса')
+            raise HTTPException(400, "Неверные данные в теле запроса")
         data = [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
         if len(data) == 1:
             return data[0]
 
-
-
     async def delete(self, *filter, **filter_by) -> None:
-        '''Удалить сущность'''
-        del_stmt = (
-            delete(self.model)
-            .filter(*filter)
-            .filter_by(**filter_by)
-        )
+        """Удалить сущность"""
+        del_stmt = delete(self.model).filter(*filter).filter_by(**filter_by)
         await self.session.execute(del_stmt)

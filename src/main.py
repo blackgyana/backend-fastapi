@@ -5,7 +5,6 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi.openapi.docs import get_swagger_ui_html
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -18,13 +17,12 @@ from src.init import redis_manager
 from src.config import settings
 
 
-
 # Функция для управления жизненным циклом приложения
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Инициализация RedisManager при запуске приложения
     await redis_manager.connect()
-    FastAPICache.init(RedisBackend(redis_manager.redis_client), prefix='fastapi-cache')
+    FastAPICache.init(RedisBackend(redis_manager.redis_client), prefix="fastapi-cache")
     yield
     # Закрытие RedisManager при остановке приложения
     await redis_manager.close()
@@ -33,25 +31,24 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-app.include_router(auth_router, tags=['Авторизация'])
-app.include_router(hotels_router, tags=['Отели'])
-app.include_router(rooms_router, tags=['Номера'])
-app.include_router(bookings_router, tags=['Бронирования'])
-app.include_router(facilities_router, tags=['Удобства'])
+app.include_router(auth_router, tags=["Авторизация"])
+app.include_router(hotels_router, tags=["Отели"])
+app.include_router(rooms_router, tags=["Номера"])
+app.include_router(bookings_router, tags=["Бронирования"])
+app.include_router(facilities_router, tags=["Удобства"])
 
 
 # Получаем текущую схему OpenAPI
 openapi_schema = app.openapi()
 # Добавляем новую security scheme для куки авторизации
-openapi_schema["components"]['securitySchemes']={
-        'CookieAuth': {
-            "type": "apiKey",
-            "in": "cookie",  # Указываем, что это cookie
-            "name": settings.COOKIE_NAME  # Название куки, которая будет содержать токен
-        }
+openapi_schema["components"]["securitySchemes"] = {
+    "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",  # Указываем, что это cookie
+        "name": settings.COOKIE_NAME,  # Название куки, которая будет содержать токен
     }
+}
 
 
-
-if __name__ == '__main__':
-    uvicorn.run('main:app', reload=True)
+if __name__ == "__main__":
+    uvicorn.run("main:app", reload=True)

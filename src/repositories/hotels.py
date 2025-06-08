@@ -12,25 +12,22 @@ class HotelsRepository(BaseRepository):
     mapper = HotelsDataMapper
 
     async def get_filtered_by_dates(
-            self,
-            date_from: date,
-            date_to: date,
-            limit: int,
-            offset: int,
-            title: str | None = None,
-            location: str | None = None
-        ):
-
-        filtered_rooms_ids = filtered_free_rooms_ids(
-            date_from=date_from, date_to=date_to)
+        self,
+        date_from: date,
+        date_to: date,
+        limit: int,
+        offset: int,
+        title: str | None = None,
+        location: str | None = None,
+    ):
+        filtered_rooms_ids = filtered_free_rooms_ids(date_from=date_from, date_to=date_to)
 
         filtered_rooms_hotels_ids = (
             select(RoomsORM.hotel_id)
             .select_from(RoomsORM)
             .filter(RoomsORM.id.in_(filtered_rooms_ids))
         )
-        query = select(HotelsORM).filter(
-            HotelsORM.id.in_(filtered_rooms_hotels_ids))
+        query = select(HotelsORM).filter(HotelsORM.id.in_(filtered_rooms_hotels_ids))
         if title:
             query = query.filter(
                 HotelsORM.title.icontains(title.strip()),

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from datetime import date, datetime
 
 
@@ -16,16 +16,16 @@ class BookingAddDTO(BaseModel):
     date_to: date
     price: int
 
+
 class BookingUpdateDTO(BaseModel):
     user_id: int = None
-    room_id: int  = None
-    date_from: date  = None
-    date_to: date  = None
-    price: int  = None
+    room_id: int = None
+    date_from: date = None
+    date_to: date = None
+    price: int = None
 
 
 class BookingDTO(BookingAddDTO):
     id: int
     total_cost: int
     created_at: datetime
-
