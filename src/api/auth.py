@@ -15,9 +15,13 @@ async def register_user(user_data: UserRequestAdd):
     request_data = user_data.model_dump()
     del request_data["password"]
     new_user_data = UserAdd(hashed_password=hashed_password, **request_data)
-    async with async_session_maker() as session:
-        await UsersRepository(session).add(new_user_data)
-        await session.commit()
+    try:
+        async with async_session_maker() as session:
+            await UsersRepository(session).add(new_user_data)
+            await session.commit()
+    except Exception as e:
+        print(e)
+        raise e
 
     return {"status": "OK"}
 

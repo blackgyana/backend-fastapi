@@ -56,7 +56,7 @@ class BaseRepository:
         except IntegrityError as e:
             if "foreign key constraint" in str(e):
                 raise HTTPException(
-                    status_code=400, detail="Bad request. Hotel with such id not found."
+                    status_code=400, detail="Bad request. Item not found."
                 )
             raise HTTPException(
                 status_code=400, detail="Bad request. Item not found or already exists."
