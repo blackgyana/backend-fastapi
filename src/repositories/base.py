@@ -1,10 +1,12 @@
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update, Result
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.database import Base
+from src.exceptions import ObjectNotFoundException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -32,13 +34,14 @@ class BaseRepository:
         """Получить все сущности"""
         return await self.get_filtered()
 
-    async def get(self, **filter_by):
+    async def get(self, **filter_by) -> BaseModel:
         """Получить 1 сущность"""
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
-        res = result.scalars().one_or_none()
-        if not res:
-            raise HTTPException(404, "Item not found")
+        try:
+            res = result.scalars().one()
+        except NoResultFound:
+            raise ObjectNotFoundException
         return self.mapper.to_domain_entity(res)
 
     async def get_one_or_none(self, **filter_by):

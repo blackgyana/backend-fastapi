@@ -22,7 +22,7 @@ cookie_security = APIKeyCookie(name=settings.COOKIE_NAME)
 def get_token(access_token: str = Security(cookie_security)):
     # access_token = request.cookies.get(settings.COOKIE_NAME)
     if not access_token:
-        raise HTTPException(401, "Unauthorized")
+        raise HTTPException(401, "Учетные данные не были предоставлены")
     return access_token
 
 
@@ -30,9 +30,9 @@ def get_current_user_id(token: str = Depends(get_token)):
     try:
         data = AuthService().decode_token(token)
     except jwt.exceptions.DecodeError:
-        raise HTTPException(401, "Invalid token")
+        raise HTTPException(401, "Токен невалидный")
     except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(401, "Token expired")
+        raise HTTPException(401, "Токен истек")
     return data["uid"]
 
 
