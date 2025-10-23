@@ -1,6 +1,6 @@
 from datetime import date
 from fastapi_cache.decorator import cache
-from fastapi import Body, Query, APIRouter
+from fastapi import Body, HTTPException, Query, APIRouter
 
 from src.schemas.facilities import RoomsFacilitiesAdd
 from src.api.dependencies import DBDep
@@ -24,6 +24,11 @@ async def get_rooms(
     date_from: date = Query(examples=["2025-03-01"]),
     date_to: date = Query(examples=["2025-03-10"]),
 ) -> list[RoomWithRels]:
+
+    if date_from >= date_to:
+        raise HTTPException(status_code=400, detail='Дата въезда не может быть позже даты выезда')
+
+
     return await db.rooms.get_filtered_by_dates(
         hotel_id=hotel_id, date_from=date_from, date_to=date_to
     )

@@ -5,6 +5,7 @@ from src.schemas.users import BaseUser, UserDTO, UserAdd, UserRequestAdd, UserRe
 from src.services.auth import AuthService
 from src.api.dependencies import UserIdDep
 from src.config import settings
+from src.exceptions import ObjectAlreadyExistsException, UnknownException
 
 router = APIRouter(prefix="/auth")
 
@@ -19,10 +20,10 @@ async def register_user(user_data: UserRequestAdd):
         async with async_session_maker() as session:
             await UsersRepository(session).add(new_user_data)
             await session.commit()
-    except Exception as e:
-        print(e)
-        raise e
-
+    except ObjectAlreadyExistsException:
+        raise HTTPException(status_code=409, detail='Такой пользователь уже существует')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK"}
 
 

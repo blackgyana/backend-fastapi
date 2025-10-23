@@ -2,14 +2,17 @@
 from src.database import Base
 
 
-class BaseException(Exception):
+class UnknownException(Exception):
     detail = 'Неизвестная ошибка'
 
     def __init__(self, *args, **kwargs):
         super().__init__(self.detail, *args, **kwargs)
 
-class ObjectNotFoundException(BaseException):
+class ObjectNotFoundException(UnknownException):
     detail = 'Объект не найден'
 
-class FreeRoomsNotFoundException(BaseException):
+class FreeRoomsNotFoundException(UnknownException):
     detail = 'Нет свободных номеров'
+
+class ObjectAlreadyExistsException(UnknownException):
+    detail = 'Объект уже существует'

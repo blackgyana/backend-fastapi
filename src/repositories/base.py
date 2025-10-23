@@ -3,10 +3,12 @@ from sqlalchemy import delete, insert, select, update, Result
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
+
+from asyncpg.exceptions import UniqueViolationError
 from sqlalchemy.exc import IntegrityError
 
 from src.database import Base
-from src.exceptions import ObjectNotFoundException
+from src.exceptions import ObjectAlreadyExistsException, ObjectNotFoundException, UnknownException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -42,6 +44,8 @@ class BaseRepository:
             res = result.scalars().one()
         except NoResultFound:
             raise ObjectNotFoundException
+        except:
+            raise UnknownException
         return self.mapper.to_domain_entity(res)
 
     async def get_one_or_none(self, **filter_by):
@@ -56,14 +60,10 @@ class BaseRepository:
         add_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         try:
             result = await self.session.execute(add_stmt)
-        except IntegrityError as e:
-            if "foreign key constraint" in str(e):
-                raise HTTPException(
-                    status_code=400, detail="Bad request. Item not found."
-                )
-            raise HTTPException(
-                status_code=400, detail="Bad request. Item not found or already exists."
-            )
+        except (UniqueViolationError, IntegrityError):
+            raise ObjectAlreadyExistsException
+        except:
+            raise UnknownException
         return self.mapper.to_domain_entity(result.scalars().one())
 
     async def add_bulk(self, data: list[BaseModel]):
