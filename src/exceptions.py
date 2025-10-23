@@ -11,5 +11,5 @@ class BaseException(Exception):
 class ObjectNotFoundException(BaseException):
     detail = 'Объект не найден'
 
-class NoFreeRoomsException(BaseException):
+class FreeRoomsNotFoundException(BaseException):
     detail = 'Нет свободных номеров'

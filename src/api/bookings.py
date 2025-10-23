@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.exceptions import ObjectNotFoundException
+from src.exceptions import FreeRoomsNotFoundException, ObjectNotFoundException
 from src.schemas.bookings import BookingAddDTO, BookingAddRequest, BookingDTO
 from src.schemas.rooms import RoomDTO
 
@@ -28,10 +28,13 @@ async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingAddRequest
     except ObjectNotFoundException:
         raise HTTPException(status_code=400, detail='Номер не найден')
     _booking_data = BookingAddDTO(**booking_data.model_dump(), user_id=uid, price=room.price)
-    booking: BookingDTO = await db.bookings.add_booking(
-        _booking_data, hotel_id=booking_data.hotel_id
-    )
-    await db.commit()
+    try:
+        booking: BookingDTO = await db.bookings.add_booking(
+            _booking_data, hotel_id=booking_data.hotel_id
+        )
+        await db.commit()
+    except FreeRoomsNotFoundException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK", "data": booking}
 
 
