@@ -1,3 +1,6 @@
+from sqlalchemy.exc import IntegrityError, NoResultFound
+from asyncpg import ForeignKeyViolationError, UniqueViolationError
+from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, UnknownException
 from src.repositories.mappers.mappers import FacilitiesDataMapper, RoomsFacilitiesDataMapper
 from src.models.facilities import FacilitiesORM, RoomsFacilitiesORM
 from src.repositories.base import BaseRepository
@@ -42,10 +45,17 @@ class RoomsFacilitiesRepository(BaseRepository):
         insert_stmt = insert(RoomsFacilitiesORM).from_select(
             ["room_id", "facility_id"], select(room_id, facilities_ids_add)
         )
-        await self.session.execute(insert_stmt)
-        delete_stmt = (
-            delete(RoomsFacilitiesORM)
-            .filter(RoomsFacilitiesORM.facility_id.in_(select(facilities_ids_del)))
-            .filter_by(room_id=room_id)
-        )
-        await self.session.execute(delete_stmt)
+        try:
+            await self.session.execute(insert_stmt)
+            delete_stmt = (
+                delete(RoomsFacilitiesORM)
+                .filter(RoomsFacilitiesORM.facility_id.in_(select(facilities_ids_del)))
+                .filter_by(room_id=room_id)
+            )
+            await self.session.execute(delete_stmt)
+        except UniqueViolationError:
+            raise ObjectAlreadyExistsException
+        except (ForeignKeyViolationError, NoResultFound, IntegrityError):
+            raise ObjectInBulkNotFoundException
+        except:
+            raise UnknownException

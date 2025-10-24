@@ -4,11 +4,11 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
-from asyncpg.exceptions import UniqueViolationError
+from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from sqlalchemy.exc import IntegrityError
 
 from src.database import Base
-from src.exceptions import ObjectAlreadyExistsException, ObjectNotFoundException, UnknownException
+from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -73,8 +73,12 @@ class BaseRepository:
         )
         try:
             result = await self.session.execute(add_stmt)
-        except IntegrityError:
-            raise HTTPException(status_code=400, detail="Bad request. Item already exists.")
+        except UniqueViolationError:
+            raise ObjectAlreadyExistsException
+        except (ForeignKeyViolationError, IntegrityError):
+            raise ObjectInBulkNotFoundException
+        except:
+            raise UnknownException
         return [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
 
     async def update(self, data: BaseModel, exclude_unset=False, **filter_by):
@@ -87,13 +91,16 @@ class BaseRepository:
         )
         try:
             result = await self.session.execute(edit_stmt)
-        except IntegrityError or Exception:
-            raise HTTPException(400, "Неверные данные в теле запроса")
-        data = [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
-        if len(data) == 1:
-            return data[0]
+            data = [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
+            if len(data) == 1:
+                return data[0]
+        except NoResultFound:
+            raise ObjectNotFoundException
 
     async def delete(self, *filter, **filter_by) -> None:
         """Удалить сущность"""
         del_stmt = delete(self.model).filter(*filter).filter_by(**filter_by)
-        await self.session.execute(del_stmt)
+        try:
+            await self.session.execute(del_stmt)
+        except NoResultFound:
+            raise ObjectNotFoundException

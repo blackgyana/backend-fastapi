@@ -16,3 +16,6 @@ class FreeRoomsNotFoundException(UnknownException):
 
 class ObjectAlreadyExistsException(UnknownException):
     detail = 'Объект уже существует'
+
+class ObjectInBulkNotFoundException(UnknownException):
+    detail = 'Объект в списке не найден'

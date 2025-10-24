@@ -2,6 +2,7 @@ from datetime import date
 from fastapi_cache.decorator import cache
 from fastapi import Body, HTTPException, Query, APIRouter
 
+from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
 from src.schemas.facilities import RoomsFacilitiesAdd
 from src.api.dependencies import DBDep
 from src.schemas.rooms import (
@@ -34,10 +35,13 @@ async def get_rooms(
     )
 
 
-@router.get("/{hotel_id}/rooms/{room_id}", summary="Получить 1 номер")
+@router.get("/{hotel_id}/rooms/{room_id}", summary="Получить номер")
 @cache(expire=60)
 async def get_room(db: DBDep, hotel_id: int, room_id: int):
-    return await db.rooms.get_one(hotel_id=hotel_id, room_id=room_id)
+    try:
+        return await db.rooms.get_one(hotel_id=hotel_id, room_id=room_id)
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=404, detail='Номер не найден')
 
 
 @router.post("/{hotel_id}/rooms", summary="Добавить номер")
@@ -69,13 +73,22 @@ async def add_room(
         }
     ),
 ):
+    
     _room_data = RoomAddDTO(hotel_id=hotel_id, **room_data.model_dump())
-    room: RoomDTO = await db.rooms.add(_room_data)
+    try:
+        room: RoomDTO = await db.rooms.add(_room_data)
+    except ObjectAlreadyExistsException:
+        raise HTTPException(status_code=409, detail='Номер уже существует')
     rooms_facilities_data = [
-        RoomsFacilitiesAdd(room_id=room.id, facility_id=fid) for fid in room_data.facilities_ids
+        RoomsFacilitiesAdd(room_id=room.id, facility_id=fid) for fid in set(room_data.facilities_ids)
     ]
-    if rooms_facilities_data:
-        await db.rooms_facilities.add_bulk(rooms_facilities_data)
+    try:
+        if rooms_facilities_data:
+            await db.rooms_facilities.add_bulk(rooms_facilities_data)
+    except ObjectInBulkNotFoundException:
+        raise HTTPException(status_code=409, detail='Некоторые объекты не найдены в списке удобств')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     await db.commit()
     return {"status": "OK", "data": room}
 
@@ -87,8 +100,16 @@ async def add_room(
 )
 async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAddRequest):
     _room_data = RoomAddDTO(**room_data.model_dump(), hotel_id=hotel_id)
-    await db.rooms.update(_room_data, id=room_id, hotel_id=hotel_id)
-    await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
+    try:
+        await db.rooms.update(_room_data, id=room_id, hotel_id=hotel_id)
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=409, detail='Номер не найден')
+    try:
+        await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
+    except ObjectInBulkNotFoundException:
+        raise HTTPException(status_code=409, detail='Некоторые объекты не найдены в списке удобств')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     await db.commit()
     return {"status": "OK"}
 
@@ -101,15 +122,26 @@ async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAdd
 async def update_room_part(db: DBDep, hotel_id: int, room_id: int, room_data: RoomPatchRequest):
     clear_data = room_data.model_dump(exclude_unset=True)
     _room_data = RoomPatch(**clear_data, hotel_id=hotel_id)
-    await db.rooms.update(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
-    if "facilities_ids" in clear_data:
-        await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
-    await db.commit()
+    try:
+        await db.rooms.update(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+        if "facilities_ids" in clear_data:
+            await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
+    
+        await db.commit()
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=409, detail='Номер не найден')
+    except ObjectInBulkNotFoundException:
+        raise HTTPException(status_code=409, detail='Некоторые объекты не найдены в списке удобств')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK"}
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}", summary="Удалить номер")
 async def delete_room(db: DBDep, hotel_id: int, room_id: int):
-    await db.rooms.delete(id=room_id, hotel_id=hotel_id)
+    try:
+        await db.rooms.delete(id=room_id, hotel_id=hotel_id)
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=409, detail='Номер не найден')
     await db.commit()
     return {"status": "OK"}
