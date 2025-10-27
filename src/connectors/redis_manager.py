@@ -1,3 +1,4 @@
+import logging
 from redis.asyncio import Redis
 from typing import AsyncGenerator
 
@@ -16,6 +17,7 @@ class RedisManager:
 
     async def connect(self):
         """Устанавливает соединение с Redis."""
+        logging.info(f'Подключение к Redis {self.host}:{self.port} ...')
         if self.redis_client is None:
             self.redis_client = Redis(
                 host=self.host,
@@ -24,6 +26,7 @@ class RedisManager:
                 password=self.password,
                 decode_responses=True,
             )
+        logging.info(f'✅ Успешное подключение к Redis {self.host}:{self.port} !')
 
     async def _ensure_connected(self):
         """Проверяет, что клиент Redis подключен."""
@@ -48,8 +51,11 @@ class RedisManager:
     async def close(self):
         """Закрывает соединение с Redis."""
         if self.redis_client is not None:
+            logging.info(f'Закрываем соединение с Redis {self.host}:{self.port}')
             await self.redis_client.close()
             self.redis_client = None
+            logging.info(f'Успешное отключение Redis {self.host}:{self.port}')
+
 
 
 # Зависимость Depends для использования в FastAPI
