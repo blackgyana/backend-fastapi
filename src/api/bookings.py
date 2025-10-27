@@ -47,4 +47,5 @@ async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingAddRequest
 async def delete_booking(uid: UserIdDep, db: DBDep, booking_id: int):
     await db.bookings.delete(id=booking_id, user_id=uid)
     await db.commit()
+        
     return {"status": "OK"}

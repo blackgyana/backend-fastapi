@@ -91,7 +91,10 @@ class BaseRepository:
         )
         try:
             result = await self.session.execute(edit_stmt)
-            data = [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
+            objs = result.scalars().all()
+            if len(objs) == 0:
+                raise NoResultFound
+            data = [self.mapper.to_domain_entity(obj) for obj in objs]
             if len(data) == 1:
                 return data[0]
         except NoResultFound:
@@ -99,8 +102,12 @@ class BaseRepository:
 
     async def delete(self, *filter, **filter_by) -> None:
         """Удалить сущность"""
-        del_stmt = delete(self.model).filter(*filter).filter_by(**filter_by)
         try:
-            await self.session.execute(del_stmt)
+            del_stmt = delete(self.model).filter(*filter).filter_by(**filter_by)
+            result = await self.session.execute(del_stmt)
+            if result.rowcount == 0:
+                raise NoResultFound
         except NoResultFound:
             raise ObjectNotFoundException
+        except:
+            raise UnknownException

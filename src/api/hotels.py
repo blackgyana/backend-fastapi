@@ -90,6 +90,11 @@ async def update_hotel_part(db: DBDep, hotel_id: int, hotel_data: HotelPATCH):
 
 @router.delete("/{hotel_id}", summary="Удалить отель")
 async def delete_hotel(db: DBDep, hotel_id: int):
-    await db.hotels.delete(id=hotel_id)
-    await db.commit()
+    try:
+        await db.hotels.delete(id=hotel_id)
+        await db.commit()
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=404, detail='Отель не найден')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK"}

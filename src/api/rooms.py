@@ -85,11 +85,12 @@ async def add_room(
     try:
         if rooms_facilities_data:
             await db.rooms_facilities.add_bulk(rooms_facilities_data)
+        await db.commit()
     except ObjectInBulkNotFoundException:
         raise HTTPException(status_code=409, detail='Некоторые объекты не найдены в списке удобств')
     except UnknownException as ex:
         raise HTTPException(status_code=409, detail=ex.detail)
-    await db.commit()
+    
     return {"status": "OK", "data": room}
 
 
@@ -103,14 +104,15 @@ async def update_room(db: DBDep, hotel_id: int, room_id: int, room_data: RoomAdd
     try:
         await db.rooms.update(_room_data, id=room_id, hotel_id=hotel_id)
     except ObjectNotFoundException:
-        raise HTTPException(status_code=409, detail='Номер не найден')
+        raise HTTPException(status_code=404, detail='Номер не найден')
     try:
         await db.rooms_facilities.set(room_id=room_id, facilities_ids=room_data.facilities_ids)
+        await db.commit()
     except ObjectInBulkNotFoundException:
         raise HTTPException(status_code=409, detail='Некоторые объекты не найдены в списке удобств')
     except UnknownException as ex:
         raise HTTPException(status_code=409, detail=ex.detail)
-    await db.commit()
+
     return {"status": "OK"}
 
 
@@ -129,7 +131,7 @@ async def update_room_part(db: DBDep, hotel_id: int, room_id: int, room_data: Ro
     
         await db.commit()
     except ObjectNotFoundException:
-        raise HTTPException(status_code=409, detail='Номер не найден')
+        raise HTTPException(status_code=404, detail='Номер не найден')
     except ObjectInBulkNotFoundException:
         raise HTTPException(status_code=409, detail='Некоторые объекты не найдены в списке удобств')
     except UnknownException as ex:
@@ -141,7 +143,9 @@ async def update_room_part(db: DBDep, hotel_id: int, room_id: int, room_data: Ro
 async def delete_room(db: DBDep, hotel_id: int, room_id: int):
     try:
         await db.rooms.delete(id=room_id, hotel_id=hotel_id)
+        await db.commit()
     except ObjectNotFoundException:
-        raise HTTPException(status_code=409, detail='Номер не найден')
-    await db.commit()
+        raise HTTPException(status_code=404, detail='Номер не найден')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK"}
