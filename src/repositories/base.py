@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update, Result
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
 
 from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -22,9 +21,9 @@ class BaseRepository:
         """Валидация ответа на единственную сущность"""
         count = len(result.scalars().all())  # sequence отдает результат только 1 раз
         if count == 0:
-            raise HTTPException(status_code=404, detail="Item not found")
+            raise ObjectNotFoundException
         elif count > 1:
-            raise HTTPException(status_code=400, detail="Bad request")
+            raise UnknownException
 
     async def get_filtered(self, *filter, **filter_by):
         query = select(self.model).filter(*filter).filter_by(**filter_by)
@@ -41,10 +40,10 @@ class BaseRepository:
         result = await self.session.execute(query)
         try:
             res = result.scalars().one()
-        except NoResultFound:
-            raise ObjectNotFoundException
-        except:
-            raise UnknownException
+        except NoResultFound as ex:
+            raise ObjectNotFoundException from ex
+        except Exception as ex:
+            raise UnknownException from ex
         return self.mapper.to_domain_entity(res)
 
     async def get_one_or_none(self, **filter_by):
@@ -59,10 +58,10 @@ class BaseRepository:
         add_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         try:
             result = await self.session.execute(add_stmt)
-        except (UniqueViolationError, IntegrityError):
-            raise ObjectAlreadyExistsException
-        except:
-            raise UnknownException
+        except (UniqueViolationError, IntegrityError) as ex:
+            raise ObjectAlreadyExistsException from ex
+        except Exception as ex:
+            raise UnknownException from ex
         return self.mapper.to_domain_entity(result.scalars().one())
 
     async def add_bulk(self, data: list[BaseModel]):
@@ -74,10 +73,10 @@ class BaseRepository:
             result = await self.session.execute(add_stmt)
         except UniqueViolationError:
             raise ObjectAlreadyExistsException
-        except (ForeignKeyViolationError, IntegrityError):
-            raise ObjectInBulkNotFoundException
-        except:
-            raise UnknownException
+        except (ForeignKeyViolationError, IntegrityError) as ex:
+            raise ObjectInBulkNotFoundException from ex
+        except Exception as ex:
+            raise UnknownException from ex
         return [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]
 
     async def update(self, data: BaseModel, exclude_unset=False, **filter_by):
@@ -96,8 +95,8 @@ class BaseRepository:
             data = [self.mapper.to_domain_entity(obj) for obj in objs]
             if len(data) == 1:
                 return data[0]
-        except NoResultFound:
-            raise ObjectNotFoundException
+        except NoResultFound as ex:
+            raise ObjectNotFoundException from ex
 
     async def delete(self, *filter, **filter_by) -> None:
         """Удалить сущность"""
@@ -106,7 +105,7 @@ class BaseRepository:
             result = await self.session.execute(del_stmt)
             if result.rowcount == 0:
                 raise NoResultFound
-        except NoResultFound:
-            raise ObjectNotFoundException
-        except:
-            raise UnknownException
+        except NoResultFound as ex:
+            raise ObjectNotFoundException from ex
+        except Exception as ex:
+            raise UnknownException from ex

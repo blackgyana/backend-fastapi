@@ -29,7 +29,7 @@ async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingAddRequest
     except ObjectNotFoundException:
         raise HTTPException(status_code=400, detail='Номер не найден')
     try:
-        hotel: HotelDTO = await db.hotels.get_one_or_none(id=room.hotel_id)
+        hotel: HotelDTO = await db.hotels.get(id=room.hotel_id)
     except ObjectNotFoundException:
         raise HTTPException(status_code=400, detail='Отель не найден')
     _booking_data = BookingAddDTO(**booking_data.model_dump(), user_id=uid, price=room.price)
@@ -49,7 +49,7 @@ async def delete_booking(uid: UserIdDep, db: DBDep, booking_id: int):
         await db.bookings.delete(id=booking_id, user_id=uid)
         await db.commit()
     except ObjectNotFoundException:
-        raise HTTPException(status_code=400, detail='Бронировние не найдено')
+        raise HTTPException(status_code=404, detail='Бронировние не найдено')
     except UnknownException as ex:
         HTTPException(status_code=409, detail=ex.detail)
         
