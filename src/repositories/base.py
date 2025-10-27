@@ -1,11 +1,10 @@
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update, Result
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
 from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.database import Base
 from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException

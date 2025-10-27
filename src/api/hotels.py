@@ -2,7 +2,7 @@ from datetime import date
 from fastapi_cache.decorator import cache
 from fastapi import Body, HTTPException, Query, APIRouter
 
-from exceptions import ObjectNotFoundException, UnknownException
+from src.exceptions import ObjectAlreadyExistsException, ObjectNotFoundException, UnknownException
 from src.schemas.hotels import HotelDTO, HotelAddDTO, HotelPATCH
 from src.api.dependencies import PaginationDep, DBDep
 
@@ -65,15 +65,25 @@ async def add_hotel(
         }
     ),
 ):
-    new_hotel = await db.hotels.add(hotel_data)
-    await db.commit()
+    try:
+        new_hotel = await db.hotels.add(hotel_data)
+        await db.commit()
+    except ObjectAlreadyExistsException:
+        raise HTTPException(status_code=409, detail='Отель уже существует')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK", "data": new_hotel}
 
 
 @router.put("/{hotel_id}", summary="Обновить информацию об отеле")
 async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAddDTO):
-    await db.hotels.update(hotel_data, id=hotel_id)
-    await db.commit()
+    try:
+        await db.hotels.update(hotel_data, id=hotel_id)
+        await db.commit()
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=404, detail='Отель не найден')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK"}
 
 
@@ -83,8 +93,13 @@ async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAddDTO):
     description="Можно менять каждое поле в отдельности или все поля разом",
 )
 async def update_hotel_part(db: DBDep, hotel_id: int, hotel_data: HotelPATCH):
-    await db.hotels.update(hotel_data, exclude_unset=True, id=hotel_id)
-    await db.commit()
+    try:
+        await db.hotels.update(hotel_data, exclude_unset=True, id=hotel_id)
+        await db.commit()
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=404, detail='Отель не найден')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK"}
 
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.exceptions import FreeRoomsNotFoundException, ObjectNotFoundException
+from src.exceptions import FreeRoomsNotFoundException, ObjectNotFoundException, UnknownException
 from src.schemas.bookings import BookingAddDTO, BookingAddRequest, BookingDTO
 from src.schemas.hotels import HotelDTO
 from src.schemas.rooms import RoomDTO
@@ -45,7 +45,12 @@ async def add_booking(uid: UserIdDep, db: DBDep, booking_data: BookingAddRequest
 
 @router.delete("/{booking_id}", summary="Удалить бронирование")
 async def delete_booking(uid: UserIdDep, db: DBDep, booking_id: int):
-    await db.bookings.delete(id=booking_id, user_id=uid)
-    await db.commit()
+    try:
+        await db.bookings.delete(id=booking_id, user_id=uid)
+        await db.commit()
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=400, detail='Бронировние не найдено')
+    except UnknownException as ex:
+        HTTPException(status_code=409, detail=ex.detail)
         
     return {"status": "OK"}

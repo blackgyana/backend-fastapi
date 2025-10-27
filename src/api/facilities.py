@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
+from src.exceptions import ObjectAlreadyExistsException, UnknownException
 from src.schemas.facilities import FacilityDTO, FacilityAddDTO
 from src.api.dependencies import DBDep
 
@@ -16,6 +17,11 @@ async def get_facilities(db: DBDep) -> list[FacilityDTO]:
 
 @router.post("", summary="Добавить удобство")
 async def add_facility(db: DBDep, facility_data: FacilityAddDTO):
-    facility = await db.facilities.add(facility_data)
-    await db.commit()
+    try:
+        facility = await db.facilities.add(facility_data)
+        await db.commit()
+    except ObjectAlreadyExistsException:
+        raise HTTPException(status_code=409, detail='Удобство уже существует')
+    except UnknownException as ex:
+        raise HTTPException(status_code=409, detail=ex.detail)
     return {"status": "OK", "data": facility}
