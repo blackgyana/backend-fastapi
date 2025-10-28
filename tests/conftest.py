@@ -37,9 +37,12 @@ async def get_db_null_pool():
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
 
-
+# Перезаписываем dependency приложения на время запуска тестов через 1 соединение
 app.dependency_overrides[get_db] = get_db_null_pool
 
+
+# scope = session - на сессию тестирования
+# scope = function - на 1 вызов функции
 
 @pytest.fixture(scope="session")
 async def http() -> AsyncGenerator[AsyncClient, None]:
@@ -80,11 +83,13 @@ user_auth_data = {"email": "test@mail.com", "password": "pass1234"}
 
 @pytest.fixture(scope="session", autouse=True)
 async def create_user(load_mock_data, http: AsyncClient):
+    'Создать пользователя после загрузки мок-данных'
     await http.post(url="/auth/register", json=user_auth_data)
 
 
 @pytest.fixture(scope="session")
 async def authenticated_http(create_user, http: AsyncClient):
+    'Аутентификация созданного пользователя и возврат http-клиента с полученными cookie'
     response = await http.post(url="/auth/login", json=user_auth_data)
     res = response.json()
     assert response.status_code == 200

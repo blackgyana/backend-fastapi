@@ -12,7 +12,7 @@ from fastapi_cache.backends.redis import RedisBackend
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.tasks.tasks import periodic_loop_task
+# from src.tasks.tasks import periodic_loop_task
 from src.api.images import router as images_router
 from src.api.facilities import router as facilities_router
 from src.api.bookings import router as bookings_router
@@ -23,7 +23,7 @@ from src.init import redis_manager
 from src.config import settings
 from src.database import check_database_connection
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 # Функция для управления жизненным циклом приложения
