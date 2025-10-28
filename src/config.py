@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+
+    SMTP_DOMAIN: str
+    SMTP_PORT: str
+    EMAIL_ADDR: str
+    EMAIL_PASS: str
+
     # DSN format
     @property
     def REDIS_URL(self):

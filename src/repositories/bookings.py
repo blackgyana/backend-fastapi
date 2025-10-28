@@ -1,5 +1,6 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from fastapi import HTTPException
+from sqlalchemy import select
 from src.repositories.mappers.mappers import BookingsDataMapper
 from src.repositories.base import BaseRepository
 from src.models.bookings import BookingsORM
@@ -23,3 +24,13 @@ class BookingsRepository(BaseRepository):
         if data.room_id in free_rooms_ids.scalars().all():
             return await self.add(data)
         raise HTTPException(status_code=400, detail="No such free rooms left.")
+
+    async def get_bookings_with_today_checkin(self):
+        "Получить бронирования с заселением сегодня"
+        query = (
+            select(BookingsORM)
+            .filter(BookingsORM.date_from == date.today())
+            )
+        result = await self.session.execute(query)
+
+        return [self.mapper.to_domain_entity(obj) for obj in result.scalars().all()]

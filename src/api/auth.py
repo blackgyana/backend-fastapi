@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, BackgroundTasks
 from database import async_session_maker
 from src.repositories.users import UsersRepository
 from src.schemas.users import BaseUser, UserDTO, UserAdd, UserRequestAdd, UserRequestLogin
@@ -7,11 +7,13 @@ from src.api.dependencies import UserIdDep
 from src.config import settings
 from src.exceptions import ObjectAlreadyExistsException, UnknownException
 
+from src.background_tasks.email import send_email
+
 router = APIRouter(prefix="/auth")
 
 
 @router.post("/register")
-async def register_user(user_data: UserRequestAdd):
+async def register_user(user_data: UserRequestAdd, background_tasks: BackgroundTasks):
     hashed_password = AuthService().hash_password(user_data.password)
     request_data = user_data.model_dump()
     del request_data["password"]
@@ -24,6 +26,12 @@ async def register_user(user_data: UserRequestAdd):
         raise HTTPException(status_code=409, detail='Такой пользователь уже существует')
     except UnknownException as ex:
         raise HTTPException(status_code=409, detail=ex.detail)
+
+    # Отправка почты в фоне
+    # background_tasks.add_task(send_email,
+    #         'Регистрация в сервисе',
+    #         new_user_data.email,
+    #         'Спасибо за регистрация в нашем сервисе!')
     return {"status": "OK"}
 
 

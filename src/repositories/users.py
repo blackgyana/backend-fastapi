@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from repositories.mappers.mappers import UserWithHashedPasswordDataMapper
+from src.repositories.mappers.mappers import UserWithHashedPasswordDataMapper
 from src.models.users import UsersORM
 from src.schemas.users import UserWithHashedPasswordDTO
 from src.repositories.base import BaseRepository
