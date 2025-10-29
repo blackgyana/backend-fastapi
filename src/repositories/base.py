@@ -61,7 +61,8 @@ class BaseRepository:
         except (UniqueViolationError, IntegrityError) as ex:
             raise ObjectAlreadyExistsException from ex
         except Exception as ex:
-            raise UnknownException from ex
+            raise ex
+            # raise UnknownException from ex
         return self.mapper.to_domain_entity(result.scalars().one())
 
     async def add_bulk(self, data: list[BaseModel]):

@@ -13,16 +13,17 @@ async def test_booking_crud(db: DBManager):
         date_to=date(year=2024, month=5, day=25),
         price=6000,
     )
+    # add
     new_booking = await db.bookings.add(booking_data)
     assert new_booking
     booking = await db.bookings.get(id=new_booking.id)
     assert booking
     assert booking.id == new_booking.id
-
+    # update
     booking_update = BookingUpdateDTO(price=4000)
     booking = await db.bookings.update(booking_update, exclude_unset=True, id=new_booking.id)
     assert booking.price == 4000
-
+    # delete
     await db.bookings.delete(id=booking.id)
     booking = await db.bookings.get_one_or_none(id=booking.id)
     assert not booking

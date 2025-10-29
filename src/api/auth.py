@@ -1,29 +1,30 @@
-from fastapi import APIRouter, HTTPException, Response, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Response
 from database import async_session_maker
-from src.repositories.users import UsersRepository
 from src.schemas.users import BaseUser, UserDTO, UserAdd, UserRequestAdd, UserRequestLogin
 from src.services.auth import AuthService
-from src.api.dependencies import UserIdDep
+from src.api.dependencies import DBDep, UserIdDep
 from src.config import settings
 from src.exceptions import ObjectAlreadyExistsException, UnknownException
 
-from src.background_tasks.email import send_email
+# from src.background_tasks.email import send_email
 
 router = APIRouter(prefix="/auth")
 
 
 @router.post("/register")
-async def register_user(user_data: UserRequestAdd, background_tasks: BackgroundTasks):
+async def register_user(user_data: UserRequestAdd, db: DBDep):
     hashed_password = AuthService().hash_password(user_data.password)
+    # убираем пароль
     request_data = user_data.model_dump()
     del request_data["password"]
     new_user_data = UserAdd(hashed_password=hashed_password, **request_data)
     try:
-        async with async_session_maker() as session:
-            await UsersRepository(session).add(new_user_data)
-            await session.commit()
+        await db.users.add(new_user_data)
+        await db.commit()
     except ObjectAlreadyExistsException:
         raise HTTPException(status_code=409, detail='Такой пользователь уже существует')
+    except Exception as ex:
+        raise HTTPException(status_code=409, detail=str(ex))
     except UnknownException as ex:
         raise HTTPException(status_code=409, detail=ex.detail)
 
@@ -36,9 +37,9 @@ async def register_user(user_data: UserRequestAdd, background_tasks: BackgroundT
 
 
 @router.post("/login")
-async def login_user(user_data: UserRequestLogin, response: Response):
+async def login_user(user_data: UserRequestLogin, response: Response, db: DBDep):
     async with async_session_maker() as session:
-        user: UserDTO | None = await UsersRepository(session).get_user_with_hashed_password(
+        user: UserDTO | None = await db.users.get_user_with_hashed_password(
             email=user_data.email
         )
         if not user:
@@ -58,9 +59,9 @@ async def login_user(user_data: UserRequestLogin, response: Response):
 
 
 @router.get("/me")
-async def get_me(uid: UserIdDep) -> BaseUser:
+async def get_me(uid: UserIdDep, db: DBDep) -> BaseUser:
     async with async_session_maker() as session:
-        user = await UsersRepository(session).get_one_or_none(id=uid)
+        user = await db.users.get_one_or_none(id=uid)
     return user
 
 
