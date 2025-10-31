@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from src.exceptions import ObjectNotFoundException
+from src.exceptions.base import ObjectNotFoundException
 from src.repositories.mappers.mappers import RoomsDataMapper
 from src.repositories.utils import filtered_free_rooms_ids
 from src.models.rooms import RoomsORM

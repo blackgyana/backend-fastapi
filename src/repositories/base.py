@@ -6,7 +6,7 @@ from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.database import Base
-from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
+from src.exceptions.base import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
 from src.repositories.mappers.base import DataMapper
 
 

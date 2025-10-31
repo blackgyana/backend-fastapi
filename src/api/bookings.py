@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.exceptions import FreeRoomsNotFoundException, ObjectNotFoundException, UnknownException
+from src.exceptions.base import FreeRoomsNotFoundException, ObjectNotFoundException, UnknownException
 from src.schemas.bookings import BookingAddDTO, BookingAddRequest, BookingDTO
 from src.schemas.hotels import HotelDTO
 from src.schemas.rooms import RoomDTO

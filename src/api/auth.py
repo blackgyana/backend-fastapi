@@ -4,7 +4,7 @@ from src.schemas.users import BaseUser, UserDTO, UserAdd, UserRequestAdd, UserRe
 from src.services.auth import AuthService
 from src.api.dependencies import DBDep, UserIdDep
 from src.config import settings
-from src.exceptions import ObjectAlreadyExistsException, UnknownException
+from src.exceptions.base import ObjectAlreadyExistsException, UnknownException
 
 # from src.background_tasks.email import send_email
 

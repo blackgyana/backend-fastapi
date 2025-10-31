@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
-from src.exceptions import ObjectAlreadyExistsException, UnknownException
+from src.exceptions.base import ObjectAlreadyExistsException, UnknownException
 from src.schemas.facilities import FacilityDTO, FacilityAddDTO
 from src.api.dependencies import DBDep
 

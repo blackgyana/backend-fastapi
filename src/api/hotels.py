@@ -2,7 +2,7 @@ from datetime import date
 from fastapi_cache.decorator import cache
 from fastapi import Body, HTTPException, Query, APIRouter
 
-from src.exceptions import ObjectAlreadyExistsException, ObjectNotFoundException, UnknownException
+from src.exceptions.base import ObjectAlreadyExistsException, ObjectNotFoundException, UnknownException
 from src.schemas.hotels import HotelDTO, HotelAddDTO, HotelPATCH
 from src.api.dependencies import PaginationDep, DBDep
 
@@ -20,20 +20,7 @@ async def get_hotels(
     title: str | None = Query(None, description="Название отеля"),
     location: str | None = Query(None, description="Расположение отеля"),
 ) -> list[HotelDTO]:
-    limit = pagination.per_page
-    offset = pagination.per_page * (pagination.page - 1)
-
-    if date_from >= date_to:
-        raise HTTPException(status_code=400, detail='Дата въезда не может быть позже даты выезда')
-
-    return await db.hotels.get_filtered_by_dates(
-        date_from=date_from,
-        date_to=date_to,
-        limit=limit,
-        offset=offset,
-        title=title,
-        location=location,
-    )
+    
 
 
 @router.get("/{hotel_id}", summary="Получить 1 отель")

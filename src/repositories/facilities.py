@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from asyncpg import ForeignKeyViolationError, UniqueViolationError
-from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, UnknownException, ObjectNotFoundException
+from src.exceptions.base import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, UnknownException, ObjectNotFoundException
 from src.repositories.mappers.mappers import FacilitiesDataMapper, RoomsFacilitiesDataMapper
 from src.models.facilities import FacilitiesORM, RoomsFacilitiesORM
 from src.repositories.base import BaseRepository

@@ -2,7 +2,7 @@ from datetime import date
 from fastapi_cache.decorator import cache
 from fastapi import Body, HTTPException, Query, APIRouter
 
-from src.exceptions import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
+from src.exceptions.base import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
 from src.schemas.facilities import RoomsFacilitiesAdd
 from src.api.dependencies import DBDep
 from src.schemas.rooms import (
