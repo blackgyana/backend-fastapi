@@ -1,7 +1,9 @@
 
 
 from datetime import date
+from src.exceptions.services import InvalidDatesException
 from src.utils.db_manager import DBManager
+
 
 
 class BaseService:
@@ -10,14 +12,9 @@ class BaseService:
     def __init__(self, db: DBManager | None = None):
         self.db = db
 
-
-class DataChecker:
-    
     @staticmethod
-    async def check_dates(date_from: date, date_to: date) -> None:
+    def check_dates(date_from: date, date_to: date) -> None:
         if date_from >= date_to:
-            raise DateError
+            raise InvalidDatesException
 
-    @staticmethod
-    async def check_hotel_available(db: DBManager, hotel_id: int) -> None:
-        ...
+

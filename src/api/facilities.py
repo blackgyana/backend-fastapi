@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 
-from src.exceptions.base import ObjectAlreadyExistsException, UnknownException
+from src.exceptions.base import UnknownException
+from src.exceptions.framework import FacilityAlreadyExistsHTTPException, UnknownHTTPException
+from src.exceptions.repositories import ObjectAlreadyExistsException
 from src.schemas.facilities import FacilityDTO, FacilityAddDTO
 from src.api.dependencies import DBDep
+from src.services.facilities import FacilitiesService
 
 router = APIRouter(prefix="/facilities")
 
@@ -11,17 +14,15 @@ router = APIRouter(prefix="/facilities")
 @router.get("", summary="Получить все удобства")
 @cache(expire=300)
 async def get_facilities(db: DBDep) -> list[FacilityDTO]:
-    result = await db.facilities.get_all()
-    return result
+    return await FacilitiesService(db).get_facilities()
 
 
 @router.post("", summary="Добавить удобство")
 async def add_facility(db: DBDep, facility_data: FacilityAddDTO):
     try:
-        facility = await db.facilities.add(facility_data)
-        await db.commit()
-    except ObjectAlreadyExistsException:
-        raise HTTPException(status_code=409, detail='Удобство уже существует')
+        facility = await FacilitiesService(db).add_facility(facility_data)
+    except ObjectAlreadyExistsException as ex:
+        raise FacilityAlreadyExistsHTTPException from ex
     except UnknownException as ex:
-        raise HTTPException(status_code=409, detail=ex.detail)
+        raise UnknownHTTPException from ex
     return {"status": "OK", "data": facility}

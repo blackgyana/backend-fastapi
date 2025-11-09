@@ -4,7 +4,7 @@ from src.schemas.bookings import BookingDTO
 from src.schemas.facilities import FacilityDTO, RoomsFacilitiesDTO
 from src.models.rooms import RoomsORM
 from src.models.users import UsersORM
-from src.schemas.rooms import RoomDTO
+from src.schemas.rooms import RoomDTO, RoomWithRels
 from src.schemas.users import UserDTO, UserWithHashedPasswordDTO
 from src.schemas.hotels import HotelDTO
 from src.models.hotels import HotelsORM
@@ -19,6 +19,10 @@ class HotelsDataMapper(DataMapper):
 class RoomsDataMapper(DataMapper):
     db_model = RoomsORM
     schema = RoomDTO
+
+class RoomsWithRelsDataMapper(DataMapper):
+    db_model = RoomsORM
+    schema = RoomWithRels
 
 
 class UsersDataMapper(DataMapper):

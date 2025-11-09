@@ -1,3 +1,4 @@
+import logging
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update, Result
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +7,8 @@ from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.database import Base
-from src.exceptions.base import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException, UnknownException
+from src.exceptions.base import UnknownException
+from src.exceptions.repositories import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, ObjectNotFoundException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -106,7 +108,9 @@ class BaseRepository:
             result = await self.session.execute(del_stmt)
             if result.rowcount == 0:
                 raise NoResultFound
+            return result
         except NoResultFound as ex:
             raise ObjectNotFoundException from ex
         except Exception as ex:
+            logging.exception(ex)
             raise UnknownException from ex

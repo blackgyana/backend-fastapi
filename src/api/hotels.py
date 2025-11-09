@@ -1,10 +1,15 @@
 from datetime import date
+import logging
 from fastapi_cache.decorator import cache
 from fastapi import Body, HTTPException, Query, APIRouter
 
-from src.exceptions.base import ObjectAlreadyExistsException, ObjectNotFoundException, UnknownException
-from src.schemas.hotels import HotelDTO, HotelAddDTO, HotelPATCH
+from src.exceptions.base import UnknownException
+from src.exceptions.framework import HotelAlreadyExistsHTTPException, HotelNotFoundHTTPException, InvalidDatesHTTPException, UnknownHTTPException
+from src.exceptions.repositories import ObjectAlreadyExistsException, ObjectNotFoundException
+from src.exceptions.services import InvalidDatesException
+from src.schemas.hotels import HotelDTO, HotelAddDTO, HotelUpdateDTO
 from src.api.dependencies import PaginationDep, DBDep
+from src.services.hotels import HotelsService
 
 
 router = APIRouter(prefix="/hotels")
@@ -21,17 +26,20 @@ async def get_hotels(
     location: str | None = Query(None, description="Расположение отеля"),
 ) -> list[HotelDTO]:
     
+    try:
+        return await HotelsService(db).get_hotels(pagination, date_from, date_to, title, location)
+    except InvalidDatesException as ex:
+        raise InvalidDatesHTTPException from ex
 
 
 @router.get("/{hotel_id}", summary="Получить 1 отель")
 @cache(expire=60)
 async def get_hotel(db: DBDep, hotel_id: int):
     try:
-        return await db.hotels.get(id=hotel_id)
-    except ObjectNotFoundException:
-        raise HTTPException(status_code=404, detail='Отель не найден')
-    except UnknownException as e:
-        raise HTTPException(status_code=400, detail=e.detail)
+        return await HotelsService(db).get_hotel(hotel_id)
+    except ObjectNotFoundException as ex:
+        raise HotelNotFoundHTTPException from ex
+
 
 @router.post("", summary="Добавить отель")
 async def add_hotel(
@@ -53,25 +61,23 @@ async def add_hotel(
     ),
 ):
     try:
-        new_hotel = await db.hotels.add(hotel_data)
-        await db.commit()
-    except ObjectAlreadyExistsException:
-        raise HTTPException(status_code=409, detail='Отель уже существует')
+        new_hotel = await HotelsService(db).add_hotel(hotel_data)
+    except ObjectAlreadyExistsException as ex:
+        raise HotelAlreadyExistsHTTPException from ex
     except UnknownException as ex:
-        raise HTTPException(status_code=409, detail=ex.detail)
+        raise UnknownHTTPException from ex
     return {"status": "OK", "data": new_hotel}
 
 
 @router.put("/{hotel_id}", summary="Обновить информацию об отеле")
-async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAddDTO):
+async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelUpdateDTO):
     try:
-        await db.hotels.update(hotel_data, id=hotel_id)
-        await db.commit()
-    except ObjectNotFoundException:
-        raise HTTPException(status_code=404, detail='Отель не найден')
+        upd_hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)
+    except ObjectNotFoundException as ex:
+        raise HotelNotFoundHTTPException from ex
     except UnknownException as ex:
-        raise HTTPException(status_code=409, detail=ex.detail)
-    return {"status": "OK"}
+        raise UnknownHTTPException from ex
+    return {"status": "OK", "data": upd_hotel}
 
 
 @router.patch(
@@ -79,15 +85,15 @@ async def update_hotel(db: DBDep, hotel_id: int, hotel_data: HotelAddDTO):
     summary="Частично обновить информацию об отеле",
     description="Можно менять каждое поле в отдельности или все поля разом",
 )
-async def update_hotel_part(db: DBDep, hotel_id: int, hotel_data: HotelPATCH):
+async def update_hotel_part(db: DBDep, hotel_id: int, hotel_data: HotelUpdateDTO):
     try:
-        await db.hotels.update(hotel_data, exclude_unset=True, id=hotel_id)
-        await db.commit()
-    except ObjectNotFoundException:
-        raise HTTPException(status_code=404, detail='Отель не найден')
+        upd_hotel = await HotelsService(db).update_hotel_part(hotel_id, hotel_data)
+    except ObjectNotFoundException as ex:
+        raise HotelNotFoundHTTPException from ex
     except UnknownException as ex:
-        raise HTTPException(status_code=409, detail=ex.detail)
-    return {"status": "OK"}
+        logging.exception(ex)
+        raise UnknownHTTPException from ex
+    return {"status": "OK", "data": upd_hotel}
 
 
 @router.delete("/{hotel_id}", summary="Удалить отель")
@@ -95,8 +101,9 @@ async def delete_hotel(db: DBDep, hotel_id: int):
     try:
         await db.hotels.delete(id=hotel_id)
         await db.commit()
-    except ObjectNotFoundException:
-        raise HTTPException(status_code=404, detail='Отель не найден')
+    except ObjectNotFoundException as ex:
+        raise HotelNotFoundHTTPException from ex
     except UnknownException as ex:
-        raise HTTPException(status_code=409, detail=ex.detail)
+        logging.exception(ex)
+        raise UnknownHTTPException from ex
     return {"status": "OK"}

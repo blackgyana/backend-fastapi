@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Response
 from database import async_session_maker
+from src.exceptions.repositories import ObjectAlreadyExistsException
 from src.schemas.users import BaseUser, UserDTO, UserAdd, UserRequestAdd, UserRequestLogin
 from src.services.auth import AuthService
 from src.api.dependencies import DBDep, UserIdDep
 from src.config import settings
-from src.exceptions.base import ObjectAlreadyExistsException, UnknownException
+from src.exceptions.base import UnknownException
 
 # from src.background_tasks.email import send_email
 

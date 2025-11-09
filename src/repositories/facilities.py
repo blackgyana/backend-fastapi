@@ -1,6 +1,7 @@
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from asyncpg import ForeignKeyViolationError, UniqueViolationError
-from src.exceptions.base import ObjectAlreadyExistsException, ObjectInBulkNotFoundException, UnknownException, ObjectNotFoundException
+from src.exceptions.base import UnknownException
+from src.exceptions.repositories import ObjectAlreadyExistsException, ObjectInBulkNotFoundException
 from src.repositories.mappers.mappers import FacilitiesDataMapper, RoomsFacilitiesDataMapper
 from src.models.facilities import FacilitiesORM, RoomsFacilitiesORM
 from src.repositories.base import BaseRepository
@@ -46,9 +47,7 @@ class RoomsFacilitiesRepository(BaseRepository):
             ["room_id", "facility_id"], select(room_id, facilities_ids_add)
         )
         try:
-            result = await self.session.execute(insert_stmt)
-            if result.rowcount == 0:
-                raise NoResultFound
+            await self.session.execute(insert_stmt)
             delete_stmt = (
                 delete(RoomsFacilitiesORM)
                 .filter(RoomsFacilitiesORM.facility_id.in_(select(facilities_ids_del)))
