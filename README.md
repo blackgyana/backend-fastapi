@@ -15,7 +15,7 @@ docker run --name booking_cache \
     -d redis:7.4
 
 docker run --name booking_back \
-    -p 7777:8000 \
+    -p 8080:8000 \
     --network=booking-network \
     booking_image
 
